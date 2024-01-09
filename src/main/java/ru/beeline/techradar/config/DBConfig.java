@@ -34,8 +34,7 @@ import java.util.List;
 @EnableJpaRepositories(
         entityManagerFactoryRef = "entityManagerFactory",
         basePackages = { "ru.beeline.techradar.repository" }
-)
-public class DBConfig {
+)public class DBConfig {
 
     @Primary
     @Bean(name = "dataSourceProperties")
@@ -59,7 +58,7 @@ public class DBConfig {
     ) {
         return builder
                 .dataSource(dataSource)
-                .packages("ru.beeline.eafdmmart.domain")
+                .packages("ru.beeline.techradar.domain")
                 .persistenceUnit("fdm")
                 .build();
     }
