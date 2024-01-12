@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 @Getter
@@ -27,9 +28,12 @@ public class Tech {
     @JoinColumn(name = "sectorId")
     private Sector sector;
 
-    @ManyToOne
-    @JoinColumn(name = "categoryId")
-    private Category category;
+    @ManyToMany
+    @JoinTable(
+            name = "techcategory",
+            joinColumns = @JoinColumn(name = "techid"),
+            inverseJoinColumns = @JoinColumn(name = "categoryid"))
+    private List<Category> category;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;
