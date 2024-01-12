@@ -9,7 +9,7 @@ import ru.beeline.techradar.service.TechService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/tech")
+@RequestMapping("/api/v1/tech")
 public class TechController {
     private final TechService techService;
 

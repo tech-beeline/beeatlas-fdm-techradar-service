@@ -39,10 +39,10 @@ public class Tech {
     private LocalDateTime createdDate;
 
     @Column(name = "last_modified_date")
-    private LocalDateTime lastModifiedDate;
+    private String lastModifiedDate;
 
     @Column(name = "deleted_date")
-    private LocalDateTime deletedDate;
+    private String deletedDate;
 
     @Column(name = "link")
     private String link;
