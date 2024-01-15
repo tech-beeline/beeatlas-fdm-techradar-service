@@ -36,7 +36,7 @@ public class Tech {
     private List<Category> category;
 
     @Column(name = "created_date")
-    private LocalDateTime createdDate;
+    private String createdDate;
 
     @Column(name = "last_modified_date")
     private String lastModifiedDate;
