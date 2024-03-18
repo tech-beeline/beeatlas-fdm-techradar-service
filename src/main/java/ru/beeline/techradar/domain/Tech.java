@@ -1,9 +1,7 @@
 package ru.beeline.techradar.domain;
 
 import lombok.*;
-
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
