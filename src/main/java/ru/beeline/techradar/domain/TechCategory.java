@@ -13,6 +13,8 @@ import javax.persistence.*;
 @Table(name = "techcategory")
 public class TechCategory {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "techcategory_id_generator")
+    @SequenceGenerator(name = "techcategory_id_generator", sequenceName = "techcategory_id_seq", allocationSize = 1)
     @Column(name = "Id")
     private Integer id;
 

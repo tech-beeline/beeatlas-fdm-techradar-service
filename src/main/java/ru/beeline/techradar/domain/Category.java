@@ -2,10 +2,7 @@ package ru.beeline.techradar.domain;
 
 import lombok.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Builder
 @Getter
@@ -16,6 +13,8 @@ import javax.persistence.Table;
 @Table(name = "category")
 public class Category {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "category_id_generator")
+    @SequenceGenerator(name = "category_id_generator", sequenceName = "category_id_seq", allocationSize = 1)
     @Column(name = "Id")
     private Integer id;
 

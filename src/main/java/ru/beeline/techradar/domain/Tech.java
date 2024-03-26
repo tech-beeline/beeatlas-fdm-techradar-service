@@ -2,6 +2,7 @@ package ru.beeline.techradar.domain;
 
 import lombok.*;
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.List;
 
 @Builder
@@ -13,6 +14,8 @@ import java.util.List;
 @Table(name = "tech")
 public class Tech {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tech_id_generator")
+    @SequenceGenerator(name = "tech_id_generator", sequenceName = "tech_id_seq", allocationSize = 1)
     @Column(name = "id")
     private Integer id;
 
@@ -34,13 +37,13 @@ public class Tech {
     private List<Category> category;
 
     @Column(name = "created_date")
-    private String createdDate;
+    private LocalDate createdDate;
 
     @Column(name = "last_modified_date")
-    private String lastModifiedDate;
+    private LocalDate lastModifiedDate;
 
     @Column(name = "deleted_date")
-    private String deletedDate;
+    private LocalDate deletedDate;
 
     @Column(name = "link")
     private String link;
