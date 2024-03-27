@@ -1,5 +1,6 @@
 package ru.beeline.techradar.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -37,12 +38,15 @@ public class Tech {
     private List<Category> category;
 
     @Column(name = "created_date")
+    @JsonFormat(pattern="yyyy-MM-dd")
     private LocalDate createdDate;
 
     @Column(name = "last_modified_date")
+    @JsonFormat(pattern="yyyy-MM-dd")
     private LocalDate lastModifiedDate;
 
     @Column(name = "deleted_date")
+    @JsonFormat(pattern="yyyy-MM-dd")
     private LocalDate deletedDate;
 
     @Column(name = "link")
