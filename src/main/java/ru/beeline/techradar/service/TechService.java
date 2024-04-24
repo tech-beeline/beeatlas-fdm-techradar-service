@@ -107,4 +107,10 @@ public class TechService {
             });
         });
     }
+
+    public void deleteTech(Integer id) {
+        Tech tech = techRepository.findById(id).get();
+        tech.setDeletedDate(LocalDate.now());
+        techRepository.save(tech);
+    }
 }
