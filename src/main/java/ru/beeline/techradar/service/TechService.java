@@ -14,6 +14,7 @@ import ru.beeline.techradar.repository.SectorRepository;
 import ru.beeline.techradar.repository.TechCategoryRepository;
 import ru.beeline.techradar.repository.TechRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,40 @@ public class TechService {
             techForsave.setSector(sectorRepository.findById(techDTOtoSave.getSectorId()).get());
             Tech savedTech = techRepository.save(techForsave);
             techDTOtoSave.getCategories().forEach(category -> {
+                Category categoryEntity = categoryRepository.findById((category.getId())).get();
+                techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
+            });
+        });
+    }
+
+    public void patchTech(List<TechDTO> techDTOS) {
+        List<Integer> ids = techDTOS.stream().map(TechDTO::getId).collect(Collectors.toList());
+        List<Tech> existTechList = techRepository.findAllByIdIn(ids);
+
+
+        existTechList.forEach(techDTOtoPatch -> {
+            TechDTO donor = techDTOS.stream().filter(techDTO -> techDTO.getId().equals(techDTOtoPatch.getId())).findFirst().get();
+            techDTOtoPatch.setLastModifiedDate(LocalDate.now());
+            if (donor.getLabel() != null) {
+                techDTOtoPatch.setLabel(donor.getLabel());
+            }
+            if (donor.getDescr() != null) {
+                techDTOtoPatch.setDescription(donor.getDescr());
+            }
+            if (donor.getRingId() != null) {
+                techDTOtoPatch.setRing(ringRepository.findById(donor.getRingId()).get());
+            }
+            if (donor.getSectorId() != null) {
+                techDTOtoPatch.setSector(sectorRepository.findById(donor.getSectorId()).get());
+            }
+            if (donor.getLink() != null) {
+                techDTOtoPatch.setLink(donor.getLink());
+            }
+
+            Tech savedTech = techRepository.save(techDTOtoPatch);
+            techCategoryRepository.deleteAllByTech(savedTech);
+            techCategoryRepository.flush();
+            donor.getCategories().forEach(category -> {
                 Category categoryEntity = categoryRepository.findById((category.getId())).get();
                 techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
             });

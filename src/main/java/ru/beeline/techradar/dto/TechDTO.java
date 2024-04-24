@@ -10,6 +10,8 @@ import java.util.List;
 @Data
 public class TechDTO {
 
+    private Integer id;
+
     private String label;
 
     private String descr;

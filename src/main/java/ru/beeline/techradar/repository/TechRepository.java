@@ -8,5 +8,7 @@ import java.util.List;
 
 @Repository
 public interface TechRepository extends JpaRepository<Tech, Integer> {
-    List<Tech> findAllByLabelIn(List<String> b);
+    List<Tech> findAllByLabelIn(List<String> labels);
+
+    List<Tech> findAllByIdIn(List<Integer> ids);
 }
