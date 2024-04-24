@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.domain.Category;
 import ru.beeline.techradar.domain.TechCategory;
+import ru.beeline.techradar.dto.PatchCategoryDTO;
 import ru.beeline.techradar.dto.PutTechCategoryDTO;
 import ru.beeline.techradar.repository.CategoryRepository;
 import ru.beeline.techradar.repository.TechCategoryRepository;
@@ -50,5 +51,19 @@ public class CategoryService {
         techCategories.forEach(techCategory -> techCategory.setCategory(finalSavedEntity));
         techCategoryRepository.saveAll(techCategories);
         categoryRepository.deleteAllByIdIn(category.getJoinedCategoriesId());
+    }
+
+    public void patchCategory(String id, PatchCategoryDTO category) {
+        Category entity = categoryRepository.findById(Integer.parseInt(id)).get();
+        entity.setName(category.getNewName());
+        categoryRepository.save(entity);
+    }
+
+    public void deleteCategory(String id) {
+        List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(List.of(Integer.parseInt(id)));
+        if(techCategories==null || techCategories.isEmpty());        {
+            categoryRepository.deleteById(Integer.parseInt(id));
+        }
+        new RuntimeException("table tech_category have category_id = " + id);
     }
 }
