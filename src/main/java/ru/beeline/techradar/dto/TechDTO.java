@@ -19,11 +19,7 @@ public class TechDTO {
     @JsonProperty("sector_id")
     private Integer sectorId;
 
-    private List<Category> categories;
-
-    private LocalDateTime createdDate;
-
-    private LocalDateTime lastModifiedDate;
+    private List<TechCategoryDTO> categories;
 
     private LocalDateTime deletedDate;
 
