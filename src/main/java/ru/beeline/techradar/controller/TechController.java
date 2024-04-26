@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.beeline.techradar.domain.Tech;
+import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechDTO;
 import ru.beeline.techradar.service.TechService;
 
@@ -31,7 +32,7 @@ public class TechController {
     }
 
     @PostMapping
-    public ResponseEntity addTech(@RequestBody List<TechDTO> tech) {
+    public ResponseEntity addTech(@RequestBody List<PostTechDTO> tech) {
         techService.addTech(tech);
         return ResponseEntity.status(HttpStatus.OK).build();
     }

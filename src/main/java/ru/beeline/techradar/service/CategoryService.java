@@ -9,6 +9,7 @@ import ru.beeline.techradar.dto.PutTechCategoryDTO;
 import ru.beeline.techradar.repository.CategoryRepository;
 import ru.beeline.techradar.repository.TechCategoryRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,7 +61,7 @@ public class CategoryService {
     }
 
     public void deleteCategory(String id) {
-        List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(List.of(Integer.parseInt(id)));
+        List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(new ArrayList<>(Integer.parseInt(id)));
         if(techCategories==null || techCategories.isEmpty());        {
             categoryRepository.deleteById(Integer.parseInt(id));
         }

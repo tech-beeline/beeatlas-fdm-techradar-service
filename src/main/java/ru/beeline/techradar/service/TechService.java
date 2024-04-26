@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.domain.Category;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.domain.TechCategory;
+import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechDTO;
 import ru.beeline.techradar.maper.TechMapper;
 import ru.beeline.techradar.repository.CategoryRepository;
@@ -53,12 +54,12 @@ public class TechService {
                 .stream().map(TechCategory::getTech).collect(Collectors.toList());
     }
 
-    public void addTech(List<TechDTO> techDTOs) {
-        List<String> labels = techDTOs.stream().map(TechDTO::getLabel).collect(Collectors.toList());
+    public void addTech(List<PostTechDTO> techDTOs) {
+        List<String> labels = techDTOs.stream().map(PostTechDTO::getLabel).collect(Collectors.toList());
         List<Tech> existTechList = techRepository.findAllByLabelIn(labels);
         List<String> noExistTechLabelList = existTechList.stream().map(Tech::getLabel).collect(Collectors.toList());
 
-        List<TechDTO> techDTOsToSave = techDTOs.stream()
+        List<PostTechDTO> techDTOsToSave = techDTOs.stream()
                 .filter(t -> !noExistTechLabelList.contains(t.getLabel()))
                 .collect(Collectors.toList());
 
