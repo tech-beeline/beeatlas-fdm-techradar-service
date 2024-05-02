@@ -67,6 +67,7 @@ public class TechService {
             Tech techForsave = techMapper.toTech(techDTOtoSave);
             techForsave.setRing(ringRepository.findById(techDTOtoSave.getRingId()).get());
             techForsave.setSector(sectorRepository.findById(techDTOtoSave.getSectorId()).get());
+            techForsave.setCreatedDate(LocalDate.now());
             Tech savedTech = techRepository.save(techForsave);
             techDTOtoSave.getCategories().forEach(category -> {
                 Category categoryEntity = categoryRepository.findById((category.getId())).get();
