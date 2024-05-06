@@ -1,5 +1,6 @@
 package ru.beeline.techradar.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +16,7 @@ import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechDTO;
 import ru.beeline.techradar.service.TechService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -32,9 +34,9 @@ public class TechController {
     }
 
     @PostMapping
-    public ResponseEntity addTech(@RequestBody List<PostTechDTO> tech) {
-        techService.addTech(tech);
-        return ResponseEntity.status(HttpStatus.OK).build();
+    public ResponseEntity addTech(@Valid @RequestBody List<PostTechDTO> techs) throws JsonProcessingException {
+        techService.addTech(techs);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping
