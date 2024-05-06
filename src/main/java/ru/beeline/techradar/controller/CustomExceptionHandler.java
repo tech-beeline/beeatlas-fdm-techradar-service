@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
+import ru.beeline.techradar.exception.NotFoundException;
 
 @ControllerAdvice
 @Slf4j
@@ -30,7 +31,6 @@ public class CustomExceptionHandler {
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
                 .body(e.getMessage());
     }
-
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<Object> handleException(ForbiddenException e) {
         log.error(e.getMessage());

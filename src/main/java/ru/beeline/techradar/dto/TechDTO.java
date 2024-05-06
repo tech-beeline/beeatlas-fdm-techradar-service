@@ -21,8 +21,6 @@ public class TechDTO {
 
     private List<TechCategoryDTO> categories;
 
-    private LocalDateTime deletedDate;
-
     private String link;
 
     @JsonProperty("ring_id")

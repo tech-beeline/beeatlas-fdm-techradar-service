@@ -13,6 +13,7 @@ import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechDTO;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
+import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.maper.TechMapper;
 import ru.beeline.techradar.repository.CategoryRepository;
 import ru.beeline.techradar.repository.RingRepository;
@@ -21,8 +22,10 @@ import ru.beeline.techradar.repository.TechCategoryRepository;
 import ru.beeline.techradar.repository.TechRepository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -64,7 +67,7 @@ public class TechService {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
-        validateFields(techDTOs);
+        validatePostTechDTOFields(techDTOs);
         List<String> labels = techDTOs.stream().map(PostTechDTO::getLabel).collect(Collectors.toList());
         List<Tech> existTechList = techRepository.findAllByLabelIn(labels);
         if (!existTechList.isEmpty()) {
@@ -77,12 +80,12 @@ public class TechService {
         }
 
         techDTOs.forEach(techDTOtoSave -> {
-            Tech techForsave = techMapper.toTech(techDTOtoSave);
-            techForsave.setRing(ringRepository.findById(techDTOtoSave.getRingId()).get());
-            techForsave.setSector(sectorRepository.findById(techDTOtoSave.getSectorId()).get());
-            techForsave.setCreatedDate(LocalDate.now());
-            techForsave.setLastModifiedDate(LocalDate.now());
-            Tech savedTech = techRepository.save(techForsave);
+            Tech techForSave = techMapper.toTech(techDTOtoSave);
+            techForSave.setRing(ringRepository.findById(techDTOtoSave.getRingId()).get());
+            techForSave.setSector(sectorRepository.findById(techDTOtoSave.getSectorId()).get());
+            techForSave.setCreatedDate(LocalDate.now());
+            techForSave.setLastModifiedDate(LocalDate.now());
+            Tech savedTech = techRepository.save(techForSave);
             techDTOtoSave.getCategories().forEach(category -> {
                 Category categoryEntity = categoryRepository.findById((category.getId())).get();
                 techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
@@ -90,19 +93,21 @@ public class TechService {
         });
     }
 
-    private void validateFields(List<PostTechDTO> techDTOs) {
-        for (PostTechDTO dto : techDTOs) {
-            if (dto.getLabel() == null || dto.getLabel().isEmpty() ||
-                    dto.getRingId() == null ||
-                    dto.getSectorId() == null) {
-                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', or 'sector_id' is empty.");
-            }
-        }
-    }
-
     public void patchTech(List<TechDTO> techDTOS) {
-        List<Integer> ids = techDTOS.stream().map(TechDTO::getId).collect(Collectors.toList());
-        List<Tech> existTechList = techRepository.findAllByIdIn(ids);
+        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        validateTechDTOFields(techDTOS);
+        List<Tech> existTechList = new ArrayList<>();
+        techDTOS.forEach(techDTO -> {
+            Optional<Tech> optionalTech = techRepository.findById(techDTO.getId());
+            if (optionalTech.isPresent()) {
+                existTechList.add(optionalTech.get());
+            } else {
+                throw new IllegalArgumentException("Not exist Tech with id=" + techDTO.getId());
+            }
+
+        });
 
         existTechList.forEach(techDTOtoPatch -> {
             TechDTO donor = techDTOS.stream().filter(techDTO -> techDTO.getId().equals(techDTOtoPatch.getId())).findFirst().get();
@@ -138,4 +143,26 @@ public class TechService {
         tech.setDeletedDate(LocalDate.now());
         techRepository.save(tech);
     }
+
+
+    private void validatePostTechDTOFields(List<PostTechDTO> techDTOs) {
+        for (PostTechDTO dto : techDTOs) {
+            if (dto.getLabel() == null || dto.getLabel().isEmpty() ||
+                    dto.getRingId() == null ||
+                    dto.getSectorId() == null) {
+                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', or 'sector_id' is empty.");
+            }
+        }
+    }
+
+    private void validateTechDTOFields(List<TechDTO> techDTOs) {
+        for (TechDTO dto : techDTOs) {
+            if (dto.getLabel() == null || dto.getLabel().isEmpty() ||
+                    dto.getRingId() == null ||
+                    dto.getSectorId() == null) {
+                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', or 'sector_id' is empty.");
+            }
+        }
+    }
+
 }
