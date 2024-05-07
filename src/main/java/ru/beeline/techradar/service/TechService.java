@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.controller.RequestContext;
 import ru.beeline.techradar.domain.Category;
+import ru.beeline.techradar.domain.Ring;
+import ru.beeline.techradar.domain.Sector;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.domain.TechCategory;
 import ru.beeline.techradar.dto.PostTechDTO;
@@ -24,7 +26,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -80,8 +81,12 @@ public class TechService {
 
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
-            techForSave.setRing(ringRepository.findById(techDTOtoSave.getRingId()).get());
-            techForSave.setSector(sectorRepository.findById(techDTOtoSave.getSectorId()).get());
+            Ring ring = ringRepository.findById(techDTOtoSave.getRingId())
+                    .orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
+            techForSave.setRing(ring);
+            Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
+            techForSave.setSector(sector);
             techForSave.setCreatedDate(LocalDate.now());
             techForSave.setLastModifiedDate(LocalDate.now());
             Tech savedTech = techRepository.save(techForSave);
@@ -100,13 +105,9 @@ public class TechService {
         validateTechDTOFields(techDTOS);
         List<Tech> existTechList = new ArrayList<>();
         techDTOS.forEach(techDTO -> {
-            Optional<Tech> optionalTech = techRepository.findById(techDTO.getId());
-            if (optionalTech.isPresent()) {
-                existTechList.add(optionalTech.get());
-            } else {
-                throw new IllegalArgumentException("Not exist Tech with id=" + techDTO.getId());
-            }
-
+            Tech tech = techRepository.findById(techDTO.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + techDTO.getId() + " not found."));
+            existTechList.add(tech);
         });
 
         existTechList.forEach(techDTOtoPatch -> {
@@ -132,7 +133,8 @@ public class TechService {
             techCategoryRepository.deleteAllByTech(savedTech);
             techCategoryRepository.flush();
             donor.getCategories().forEach(category -> {
-                Category categoryEntity = categoryRepository.findById((category.getId())).get();
+                Category categoryEntity = categoryRepository.findById(category.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
                 techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
             });
         });
