@@ -120,10 +120,14 @@ public class TechService {
                 techDTOtoPatch.setDescription(donor.getDescr());
             }
             if (donor.getRingId() != null) {
-                techDTOtoPatch.setRing(ringRepository.findById(donor.getRingId()).get());
+                Ring ring = ringRepository.findById(donor.getRingId())
+                        .orElseThrow(() -> new IllegalArgumentException("Ring with id=" + donor.getRingId() + " not found."));
+                techDTOtoPatch.setRing(ring);
             }
             if (donor.getSectorId() != null) {
-                techDTOtoPatch.setSector(sectorRepository.findById(donor.getSectorId()).get());
+                Sector sector = sectorRepository.findById(donor.getSectorId())
+                        .orElseThrow(() -> new IllegalArgumentException("Sector with id=" + donor.getSectorId() + " not found."));
+                techDTOtoPatch.setSector(sector);
             }
             if (donor.getLink() != null) {
                 techDTOtoPatch.setLink(donor.getLink());
