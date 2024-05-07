@@ -13,7 +13,6 @@ import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechDTO;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
-import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.maper.TechMapper;
 import ru.beeline.techradar.repository.CategoryRepository;
 import ru.beeline.techradar.repository.RingRepository;
@@ -87,7 +86,8 @@ public class TechService {
             techForSave.setLastModifiedDate(LocalDate.now());
             Tech savedTech = techRepository.save(techForSave);
             techDTOtoSave.getCategories().forEach(category -> {
-                Category categoryEntity = categoryRepository.findById((category.getId())).get();
+                Category categoryEntity = categoryRepository.findById(category.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
                 techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
             });
         });
