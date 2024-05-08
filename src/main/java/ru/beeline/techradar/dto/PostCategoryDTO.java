@@ -1,8 +1,10 @@
 package ru.beeline.techradar.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-public class PatchCategoryDTO {
+@Builder
+public class PostCategoryDTO {
     private String name;
 }

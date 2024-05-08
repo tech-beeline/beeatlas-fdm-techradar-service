@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.beeline.techradar.domain.Category;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.PatchCategoryDTO;
+import ru.beeline.techradar.dto.PostCategoryDTO;
 import ru.beeline.techradar.dto.PutTechCategoryDTO;
 import ru.beeline.techradar.service.CategoryService;
 import ru.beeline.techradar.service.TechService;
@@ -34,15 +35,14 @@ public class CategoryController {
     }
 
     @PostMapping
-    public Category addCategory(@RequestBody Category category) {
+    public Category addCategory(@RequestBody PostCategoryDTO category) {
         return categoryService.addCategory(category);
     }
 
-    @PutMapping
+    @PutMapping("/join")
     public ResponseEntity putCategory(@RequestBody PutTechCategoryDTO category) {
         categoryService.putCategory(category);
         return ResponseEntity.status(HttpStatus.OK).build();
-
     }
     @PatchMapping("/{id}")
     public ResponseEntity patchCategory(@RequestBody PatchCategoryDTO category,

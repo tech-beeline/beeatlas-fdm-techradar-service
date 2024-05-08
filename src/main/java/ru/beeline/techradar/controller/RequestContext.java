@@ -1,5 +1,7 @@
 package ru.beeline.techradar.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,10 +15,18 @@ public class RequestContext {
     }
 
     public static Map<String, Object> getHeaders() {
-        return headersThreadLocal.get();
+        Map<String, Object> headers = headersThreadLocal.get();
+        if (headers == null) {
+            headers = new HashMap<>();
+            headersThreadLocal.set(headers);
+        }
+        return headers;
     }
-
     public static List<String> getRoles() {
-        return (List<String>) getHeaders().get(USER_ROLES_HEADER);
+        List<String> roles = (List<String>) getHeaders().get(USER_ROLES_HEADER);
+        if (roles == null) {
+            return new ArrayList<>();
+        }
+        return roles;
     }
 }

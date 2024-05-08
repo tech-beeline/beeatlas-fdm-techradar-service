@@ -145,7 +145,11 @@ public class TechService {
     }
 
     public void deleteTech(Integer id) {
-        Tech tech = techRepository.findById(id).get();
+        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        Tech tech = techRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         tech.setDeletedDate(LocalDate.now());
         techRepository.save(tech);
     }
