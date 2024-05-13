@@ -55,7 +55,7 @@ public class TechService {
     }
 
     public List<Tech> getAllTech() {
-        return techRepository.findAll();
+        return techRepository.findAllByDeletedDateIsEmpty();
     }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
