@@ -10,5 +10,5 @@ import java.util.List;
 public interface TechRepository extends JpaRepository<Tech, Integer> {
     List<Tech> findAllByLabelIn(List<String> labels);
 
-    List<Tech> findAllByDeletedDateIsEmpty();
+    List<Tech> findAllByDeletedDateIsNull();
 }
