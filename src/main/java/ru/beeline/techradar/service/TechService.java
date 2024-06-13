@@ -23,9 +23,7 @@ import ru.beeline.techradar.repository.TechCategoryRepository;
 import ru.beeline.techradar.repository.TechRepository;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -136,11 +134,18 @@ public class TechService {
             Tech savedTech = techRepository.save(techDTOtoPatch);
             techCategoryRepository.deleteAllByTech(savedTech);
             techCategoryRepository.flush();
-            donor.getCategories().forEach(category -> {
-                Category categoryEntity = categoryRepository.findById(category.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
-                techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
-            });
+            Set<TechCategory> techCategories = donor.getCategories().stream()
+                    .map(category -> {
+                        Category categoryEntity = categoryRepository.findById(category.getId())
+                                .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
+                        return TechCategory.builder()
+                                .tech(savedTech)
+                                .category(categoryEntity)
+                                .build();
+                    })
+                    .collect(Collectors.toSet());
+
+            techCategoryRepository.saveAll(techCategories);
         });
     }
 
