@@ -140,16 +140,14 @@ public class TechService {
                         .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
                 tempSet.add(categoryEntity);
             });
-            List<Category> listCategory = new ArrayList<>(tempSet);
-            listCategory.forEach(categoryEntity -> {
-                techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
-            });
+            tempSet.stream()
+                    .forEach(categoryEntity -> {
+                        techCategoryRepository.save(TechCategory.builder()
+                                .tech(savedTech)
+                                .category(categoryEntity)
+                                .build());
+                    });
         });
-    }
-
-    public List<Category> removeDuplicates(List<Category> categories) {
-        Set<Category> categorySet = new HashSet<>(categories);
-        return new ArrayList<>(categorySet);
     }
 
     public void deleteTech(Integer id) {
