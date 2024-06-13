@@ -134,19 +134,18 @@ public class TechService {
             Tech savedTech = techRepository.save(techDTOtoPatch);
             techCategoryRepository.deleteAllByTech(savedTech);
             techCategoryRepository.flush();
-            Set<Category> tempSet = new HashSet<>();
-            donor.getCategories().forEach(category -> {
-                Category categoryEntity = categoryRepository.findById(category.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
-                tempSet.add(categoryEntity);
-            });
-            tempSet.stream()
-                    .forEach(categoryEntity -> {
-                        techCategoryRepository.save(TechCategory.builder()
+            Set<TechCategory> techCategories = donor.getCategories().stream()
+                    .map(category -> {
+                        Category categoryEntity = categoryRepository.findById(category.getId())
+                                .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
+                        return TechCategory.builder()
                                 .tech(savedTech)
                                 .category(categoryEntity)
-                                .build());
-                    });
+                                .build();
+                    })
+                    .collect(Collectors.toSet());
+
+            techCategoryRepository.saveAll(techCategories);
         });
     }
 
