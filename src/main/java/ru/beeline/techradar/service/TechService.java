@@ -23,9 +23,7 @@ import ru.beeline.techradar.repository.TechCategoryRepository;
 import ru.beeline.techradar.repository.TechRepository;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -136,12 +134,22 @@ public class TechService {
             Tech savedTech = techRepository.save(techDTOtoPatch);
             techCategoryRepository.deleteAllByTech(savedTech);
             techCategoryRepository.flush();
+            Set<Category> tempSet = new HashSet<>();
             donor.getCategories().forEach(category -> {
                 Category categoryEntity = categoryRepository.findById(category.getId())
                         .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
+                tempSet.add(categoryEntity);
+            });
+            List<Category> listCategory = new ArrayList<>(tempSet);
+            listCategory.forEach(categoryEntity -> {
                 techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
             });
         });
+    }
+
+    public List<Category> removeDuplicates(List<Category> categories) {
+        Set<Category> categorySet = new HashSet<>(categories);
+        return new ArrayList<>(categorySet);
     }
 
     public void deleteTech(Integer id) {
