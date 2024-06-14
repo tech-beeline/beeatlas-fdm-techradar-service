@@ -14,6 +14,7 @@ import ru.beeline.techradar.repository.TechCategoryRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -49,7 +50,7 @@ public class CategoryService {
         List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(category.getJoinedCategoriesId());
         Category finalSavedEntity = savedEntity;
         techCategories.forEach(techCategory -> techCategory.setCategory(finalSavedEntity));
-        techCategoryRepository.saveAll(techCategories);
+        techCategoryRepository.saveAll(techCategories.stream().distinct().collect(Collectors.toList()));
         categoryRepository.deleteAllByIdIn(category.getJoinedCategoriesId());
     }
 
