@@ -9,4 +9,5 @@ public interface TechCategoryRepository extends JpaRepository<TechCategory, Long
     List<TechCategory> findByCategory_IdIn(List<Integer> ids);
 
     void deleteAllByTech(Tech tech);
+    void deleteByTechCategory_In(List<TechCategory> techCategories);
 }
