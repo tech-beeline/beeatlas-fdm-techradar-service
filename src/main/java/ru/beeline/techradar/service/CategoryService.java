@@ -54,7 +54,7 @@ public class CategoryService {
         Set<Tech> techSet = techCategories.stream().map(TechCategory::getTech).collect(Collectors.toSet());
         List<TechCategory> newTechCategories = techSet.stream().map(tech -> TechCategory.builder().tech(tech).category(finalSavedEntity)
         .build()).collect(Collectors.toList());
-        techCategoryRepository.deleteByTechCategory_In(techCategories);
+        techCategoryRepository.deleteAllInBatch(techCategories);
         techCategoryRepository.saveAll(newTechCategories);
         categoryRepository.deleteAllByIdIn(category.getJoinedCategoriesId());
     }
