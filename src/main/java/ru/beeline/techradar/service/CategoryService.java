@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.controller.RequestContext;
 import ru.beeline.techradar.domain.Category;
+import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.domain.TechCategory;
 import ru.beeline.techradar.dto.PatchCategoryDTO;
 import ru.beeline.techradar.dto.PostCategoryDTO;
@@ -14,6 +15,7 @@ import ru.beeline.techradar.repository.TechCategoryRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,8 +51,11 @@ public class CategoryService {
                 .orElseGet(() -> addCategory(PostCategoryDTO.builder().name(category.getJoinCategoryName()).build()));
         List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(category.getJoinedCategoriesId());
         Category finalSavedEntity = savedEntity;
-        techCategories.forEach(techCategory -> techCategory.setCategory(finalSavedEntity));
-        techCategoryRepository.saveAll(techCategories.stream().distinct().collect(Collectors.toList()));
+        Set<Tech> techSet = techCategories.stream().map(TechCategory::getTech).collect(Collectors.toSet());
+        List<TechCategory> newTechCategories = techSet.stream().map(tech -> TechCategory.builder().tech(tech).category(finalSavedEntity)
+        .build()).collect(Collectors.toList());
+        techCategoryRepository.deleteAllInBatch(techCategories);
+        techCategoryRepository.saveAll(newTechCategories);
         categoryRepository.deleteAllByIdIn(category.getJoinedCategoriesId());
     }
 
