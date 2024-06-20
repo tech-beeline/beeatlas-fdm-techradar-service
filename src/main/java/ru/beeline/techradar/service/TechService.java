@@ -89,7 +89,9 @@ public class TechService {
             techForSave.setCreatedDate(LocalDate.now());
             techForSave.setLastModifiedDate(LocalDate.now());
             Tech savedTech = techRepository.save(techForSave);
-            saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
+            if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
+                saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
+            }
         });
     }
 
@@ -146,7 +148,9 @@ public class TechService {
             Tech savedTech = techRepository.save(techDTOtoPatch);
             techCategoryRepository.deleteAllByTech(savedTech);
             techCategoryRepository.flush();
-            saveTechCategoryWithoutDuplicate(savedTech, donor.getCategories());
+            if (donor.getCategories() != null && !donor.getCategories().isEmpty()) {
+                saveTechCategoryWithoutDuplicate(savedTech, donor.getCategories());
+            }
         });
     }
 
@@ -175,8 +179,8 @@ public class TechService {
         for (TechDTO dto : techDTOs) {
             if (dto.getLabel() == null || dto.getLabel().isEmpty() ||
                     dto.getRingId() == null ||
-                    dto.getSectorId() == null) {
-                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', or 'sector_id' is empty.");
+                    dto.getSectorId() == null || dto.getId() == null) {
+                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
             }
         }
     }
