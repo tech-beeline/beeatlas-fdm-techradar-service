@@ -2,7 +2,11 @@ package ru.beeline.techradar.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.controller.RequestContext;
@@ -32,6 +36,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class TechService {
+
+    private String techQueueName;
+    private RabbitTemplate rabbitTemplate;
     private final TechRepository techRepository;
     private final TechCategoryRepository techCategoryRepository;
     private final CategoryRepository categoryRepository;
@@ -40,18 +47,22 @@ public class TechService {
 
     private final TechMapper techMapper;
 
-    public TechService(TechRepository techRepository,
+    public TechService(RabbitTemplate rabbitTemplate,
+                       TechRepository techRepository,
                        TechCategoryRepository techCategoryRepository,
                        TechMapper techMapper,
                        CategoryRepository categoryRepository,
                        SectorRepository sectorRepository,
-                       RingRepository ringRepository) {
+                       RingRepository ringRepository,
+                       @Value("${queue.tech_queue.name}") String techQueueName) {
+        this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
         this.categoryRepository = categoryRepository;
         this.sectorRepository = sectorRepository;
         this.ringRepository = ringRepository;
+        this.techQueueName = techQueueName;
     }
 
     public List<Tech> getAllTech() {
@@ -95,6 +106,7 @@ public class TechService {
                         .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
                 techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
             });
+            sendNotify(savedTech.getId(), "CREATE", techQueueName, savedTech.getDescription());
         });
     }
 
@@ -141,6 +153,31 @@ public class TechService {
                         .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
                 techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
             });
+            sendNotify(savedTech.getId(), "UPDATE", techQueueName, savedTech.getDescription());
+        });
+    }
+
+    private void sendNotify(Integer id, String changeType, String queueName, String name) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            ObjectNode messagePayload = objectMapper.createObjectNode();
+            messagePayload.put("entity_id", id);
+            messagePayload.put("name", name);
+            messagePayload.put("change_type", changeType);
+
+            String message = objectMapper.writeValueAsString(messagePayload);
+
+            sendMessageToTechCapabilityQueue(queueName, message);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendMessageToTechCapabilityQueue(String queue, String message) {
+        rabbitTemplate.convertAndSend(queue, message, messagePostProcessor -> {
+            messagePostProcessor.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+            return messagePostProcessor;
         });
     }
 
