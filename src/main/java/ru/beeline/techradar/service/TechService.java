@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class TechService {
-
     private String techQueueName;
     private RabbitTemplate rabbitTemplate;
     private final TechRepository techRepository;
@@ -43,7 +42,6 @@ public class TechService {
     private final CategoryRepository categoryRepository;
     private final SectorRepository sectorRepository;
     private final RingRepository ringRepository;
-
     private final TechMapper techMapper;
 
     public TechService(RabbitTemplate rabbitTemplate,
@@ -53,7 +51,7 @@ public class TechService {
                        CategoryRepository categoryRepository,
                        SectorRepository sectorRepository,
                        RingRepository ringRepository,
-                       @Value("${queue.tech_queue.name}") String techQueueName) {
+                       @Value("${queue.tech-queue.name}") String techQueueName) {
         this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
