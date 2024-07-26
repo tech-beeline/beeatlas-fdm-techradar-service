@@ -101,7 +101,7 @@ public class TechService {
             if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
             }
-            sendNotify(savedTech.getId(), "CREATE", techQueueName, savedTech.getDescription());
+            sendNotify(savedTech.getId(), "CREATE", techQueueName, savedTech.getLabel());
         });
     }
 
@@ -161,7 +161,7 @@ public class TechService {
             if (donor.getCategories() != null && !donor.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, donor.getCategories());
             }
-            sendNotify(savedTech.getId(), "UPDATE", techQueueName, savedTech.getDescription());
+            sendNotify(savedTech.getId(), "UPDATE", techQueueName, savedTech.getLabel());
         });
     }
 
