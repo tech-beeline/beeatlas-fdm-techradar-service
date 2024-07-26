@@ -28,7 +28,10 @@ import ru.beeline.techradar.repository.TechCategoryRepository;
 import ru.beeline.techradar.repository.TechRepository;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -86,7 +89,7 @@ public class TechService {
             );
             throw new ConflictException(json);
         }
-
+        List<ObjectNode> messageList = new ArrayList<>();
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
             Ring ring = ringRepository.findById(techDTOtoSave.getRingId())
@@ -101,8 +104,9 @@ public class TechService {
             if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
             }
-            sendNotify(savedTech.getId(), "CREATE", techQueueName, savedTech.getLabel());
+            addMessage(savedTech.getId(), "CREATE", messageList, savedTech.getLabel());
         });
+        sendMessageToTechCapabilityQueue(techQueueName, messageList.toString());
     }
 
     private void saveTechCategoryWithoutDuplicate(Tech savedTech, List<TechCategoryDTO> categories) {
@@ -131,7 +135,7 @@ public class TechService {
                     .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + techDTO.getId() + " not found."));
             existTechList.add(tech);
         });
-
+        List<ObjectNode> messageList = new ArrayList<>();
         existTechList.forEach(techDTOtoPatch -> {
             TechDTO donor = techDTOS.stream().filter(techDTO -> techDTO.getId().equals(techDTOtoPatch.getId())).findFirst().get();
             techDTOtoPatch.setLastModifiedDate(LocalDate.now());
@@ -161,11 +165,12 @@ public class TechService {
             if (donor.getCategories() != null && !donor.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, donor.getCategories());
             }
-            sendNotify(savedTech.getId(), "UPDATE", techQueueName, savedTech.getLabel());
+            addMessage(savedTech.getId(), "UPDATE", messageList, savedTech.getLabel());
         });
+        sendMessageToTechCapabilityQueue(techQueueName, messageList.toString());
     }
 
-    private void sendNotify(Integer id, String changeType, String queueName, String name) {
+    private void addMessage(Integer id, String changeType, List<ObjectNode> messageList, String name) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
 
@@ -174,9 +179,8 @@ public class TechService {
             messagePayload.put("name", name);
             messagePayload.put("change_type", changeType);
 
-            String message = objectMapper.writeValueAsString(messagePayload);
+            messageList.add(messagePayload);
 
-            sendMessageToTechCapabilityQueue(queueName, message);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
