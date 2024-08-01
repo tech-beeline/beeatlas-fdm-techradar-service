@@ -2,7 +2,11 @@ package ru.beeline.techradar.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.controller.RequestContext;
@@ -12,6 +16,7 @@ import ru.beeline.techradar.domain.Sector;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.domain.TechCategory;
 import ru.beeline.techradar.dto.PostTechDTO;
+import ru.beeline.techradar.dto.TechCategoryDTO;
 import ru.beeline.techradar.dto.TechDTO;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
@@ -26,32 +31,38 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Transactional
 @Service
 @Slf4j
 public class TechService {
+    private String techQueueName;
+    private RabbitTemplate rabbitTemplate;
     private final TechRepository techRepository;
     private final TechCategoryRepository techCategoryRepository;
     private final CategoryRepository categoryRepository;
     private final SectorRepository sectorRepository;
     private final RingRepository ringRepository;
-
     private final TechMapper techMapper;
 
-    public TechService(TechRepository techRepository,
+    public TechService(RabbitTemplate rabbitTemplate,
+                       TechRepository techRepository,
                        TechCategoryRepository techCategoryRepository,
                        TechMapper techMapper,
                        CategoryRepository categoryRepository,
                        SectorRepository sectorRepository,
-                       RingRepository ringRepository) {
+                       RingRepository ringRepository,
+                       @Value("${queue.tech-queue.name}") String techQueueName) {
+        this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
         this.categoryRepository = categoryRepository;
         this.sectorRepository = sectorRepository;
         this.ringRepository = ringRepository;
+        this.techQueueName = techQueueName;
     }
 
     public List<Tech> getAllTech() {
@@ -78,7 +89,7 @@ public class TechService {
             );
             throw new ConflictException(json);
         }
-
+        List<ObjectNode> messageList = new ArrayList<>();
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
             Ring ring = ringRepository.findById(techDTOtoSave.getRingId())
@@ -90,12 +101,27 @@ public class TechService {
             techForSave.setCreatedDate(LocalDate.now());
             techForSave.setLastModifiedDate(LocalDate.now());
             Tech savedTech = techRepository.save(techForSave);
-            techDTOtoSave.getCategories().forEach(category -> {
-                Category categoryEntity = categoryRepository.findById(category.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
-                techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
-            });
+            if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
+                saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
+            }
+            addMessage(savedTech.getId(), "CREATE", messageList, savedTech.getLabel());
         });
+        sendMessageToTechCapabilityQueue(techQueueName, messageList.toString());
+    }
+
+    private void saveTechCategoryWithoutDuplicate(Tech savedTech, List<TechCategoryDTO> categories) {
+        Set<TechCategory> techCategories = categories.stream()
+                .map(category -> {
+                    Category categoryEntity = categoryRepository.findById(category.getId())
+                            .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
+                    return TechCategory.builder()
+                            .tech(savedTech)
+                            .category(categoryEntity)
+                            .build();
+                })
+                .collect(Collectors.toSet());
+
+        techCategoryRepository.saveAll(techCategories);
     }
 
     public void patchTech(List<TechDTO> techDTOS) {
@@ -109,7 +135,7 @@ public class TechService {
                     .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + techDTO.getId() + " not found."));
             existTechList.add(tech);
         });
-
+        List<ObjectNode> messageList = new ArrayList<>();
         existTechList.forEach(techDTOtoPatch -> {
             TechDTO donor = techDTOS.stream().filter(techDTO -> techDTO.getId().equals(techDTOtoPatch.getId())).findFirst().get();
             techDTOtoPatch.setLastModifiedDate(LocalDate.now());
@@ -136,11 +162,34 @@ public class TechService {
             Tech savedTech = techRepository.save(techDTOtoPatch);
             techCategoryRepository.deleteAllByTech(savedTech);
             techCategoryRepository.flush();
-            donor.getCategories().forEach(category -> {
-                Category categoryEntity = categoryRepository.findById(category.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
-                techCategoryRepository.save(TechCategory.builder().tech(savedTech).category(categoryEntity).build());
-            });
+            if (donor.getCategories() != null && !donor.getCategories().isEmpty()) {
+                saveTechCategoryWithoutDuplicate(savedTech, donor.getCategories());
+            }
+            addMessage(savedTech.getId(), "UPDATE", messageList, savedTech.getLabel());
+        });
+        sendMessageToTechCapabilityQueue(techQueueName, messageList.toString());
+    }
+
+    private void addMessage(Integer id, String changeType, List<ObjectNode> messageList, String name) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            ObjectNode messagePayload = objectMapper.createObjectNode();
+            messagePayload.put("entity_id", id);
+            messagePayload.put("name", name);
+            messagePayload.put("change_type", changeType);
+
+            messageList.add(messagePayload);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendMessageToTechCapabilityQueue(String queue, String message) {
+        rabbitTemplate.convertAndSend(queue, message, messagePostProcessor -> {
+            messagePostProcessor.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+            return messagePostProcessor;
         });
     }
 
@@ -169,8 +218,8 @@ public class TechService {
         for (TechDTO dto : techDTOs) {
             if (dto.getLabel() == null || dto.getLabel().isEmpty() ||
                     dto.getRingId() == null ||
-                    dto.getSectorId() == null) {
-                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', or 'sector_id' is empty.");
+                    dto.getSectorId() == null || dto.getId() == null) {
+                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
             }
         }
     }

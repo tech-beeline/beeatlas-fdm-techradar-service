@@ -3,6 +3,7 @@ package ru.beeline.techradar.domain;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Builder
 @Getter
@@ -25,4 +26,18 @@ public class TechCategory {
     @ManyToOne
     @JoinColumn(name = "categoryId")
     private Category category;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TechCategory that = (TechCategory) o;
+        return Objects.equals(tech, that.tech) &&
+                Objects.equals(category, that.category);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tech, category);
+    }
 }
