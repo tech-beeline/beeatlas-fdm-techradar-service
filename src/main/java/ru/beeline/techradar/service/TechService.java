@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.beeline.techradar.client.NotificationClient;
 import ru.beeline.techradar.controller.RequestContext;
 import ru.beeline.techradar.domain.Category;
 import ru.beeline.techradar.domain.Ring;
@@ -18,6 +19,7 @@ import ru.beeline.techradar.domain.TechCategory;
 import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechCategoryDTO;
 import ru.beeline.techradar.dto.TechDTO;
+import ru.beeline.techradar.dto.TechSubscribeDTO;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.maper.TechMapper;
@@ -46,6 +48,7 @@ public class TechService {
     private final SectorRepository sectorRepository;
     private final RingRepository ringRepository;
     private final TechMapper techMapper;
+    private final NotificationClient notificationClient;
 
     public TechService(RabbitTemplate rabbitTemplate,
                        TechRepository techRepository,
@@ -54,6 +57,7 @@ public class TechService {
                        CategoryRepository categoryRepository,
                        SectorRepository sectorRepository,
                        RingRepository ringRepository,
+                       NotificationClient notificationClient,
                        @Value("${queue.tech-queue.name}") String techQueueName) {
         this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
@@ -63,6 +67,7 @@ public class TechService {
         this.sectorRepository = sectorRepository;
         this.ringRepository = ringRepository;
         this.techQueueName = techQueueName;
+        this.notificationClient = notificationClient;
     }
 
     public List<Tech> getAllTech() {
@@ -72,6 +77,16 @@ public class TechService {
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
         return techCategoryRepository.findByCategory_IdIn(ids)
                 .stream().map(TechCategory::getTech).collect(Collectors.toList());
+    }
+
+    public List<TechSubscribeDTO> getTechSubscribed() {
+        List<Integer> techIds = notificationClient.getSubscribes("TECH");
+        if (techIds == null || techIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return techRepository.findAllByIdInAndDeletedDateIsNull(techIds).stream()
+                .map(techMapper::toTechSubscribeDTO)
+                .collect(Collectors.toList());
     }
 
     public void addTech(List<PostTechDTO> techDTOs) throws JsonProcessingException {

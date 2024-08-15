@@ -11,4 +11,7 @@ public interface TechRepository extends JpaRepository<Tech, Integer> {
     List<Tech> findAllByLabelIn(List<String> labels);
 
     List<Tech> findAllByDeletedDateIsNull();
+
+    List<Tech> findAllByIdInAndDeletedDateIsNull(List<Integer> ids);
+
 }

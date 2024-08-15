@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechDTO;
+import ru.beeline.techradar.dto.TechSubscribeDTO;
 import ru.beeline.techradar.service.TechService;
 
 import javax.validation.Valid;
@@ -33,6 +34,11 @@ public class TechController {
         return techService.getAllTech();
     }
 
+    @GetMapping("/subscribed")
+    public List<TechSubscribeDTO> getSubscribed() {
+        return techService.getTechSubscribed();
+    }
+
     @PostMapping
     public ResponseEntity addTech(@Valid @RequestBody List<PostTechDTO> techs) throws JsonProcessingException {
         techService.addTech(techs);
@@ -50,5 +56,4 @@ public class TechController {
         techService.deleteTech(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-
 }
