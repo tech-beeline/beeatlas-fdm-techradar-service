@@ -6,6 +6,7 @@ import org.mapstruct.factory.Mappers;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.PostTechDTO;
 import ru.beeline.techradar.dto.TechDTO;
+import ru.beeline.techradar.dto.TechSubscribeDTO;
 
 @Mapper
 public interface TechMapper {
@@ -15,5 +16,5 @@ public interface TechMapper {
     @Mapping(source = "descr", target = "description")
     Tech toTech(PostTechDTO techDTO);
 
-    TechDTO toDTO(Tech tech);
+    TechSubscribeDTO toTechSubscribeDTO(Tech tech);
 }
