@@ -81,7 +81,8 @@ public class TechService {
 
     public List<TechSubscribeDTO> getTechSubscribed() {
         List<Integer> techIds = notificationClient.getSubscribes("TECH");
-        if (techIds == null || techIds.isEmpty()) {
+        log.info("receive ids from notification server:" + techIds.toString());
+        if (techIds.isEmpty()) {
             return new ArrayList<>();
         }
         return techRepository.findAllByIdInAndDeletedDateIsNull(techIds).stream()
