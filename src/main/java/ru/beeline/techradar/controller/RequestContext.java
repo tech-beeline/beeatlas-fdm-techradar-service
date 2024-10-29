@@ -45,6 +45,7 @@ public class RequestContext {
     public static List<Long> getUserProducts() {
         List<String> stringList = (List<String>) getHeaders().get(USER_PRODUCTS_IDS_HEADER);
         List<Long> longList = stringList.stream()
+                .filter(str -> !str.isEmpty())
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
         return longList;
