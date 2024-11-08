@@ -10,30 +10,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.client.NotificationClient;
+import ru.beeline.techradar.client.ProductClient;
 import ru.beeline.techradar.controller.RequestContext;
-import ru.beeline.techradar.domain.Category;
-import ru.beeline.techradar.domain.Ring;
-import ru.beeline.techradar.domain.Sector;
-import ru.beeline.techradar.domain.Tech;
-import ru.beeline.techradar.domain.TechCategory;
-import ru.beeline.techradar.dto.PostTechDTO;
-import ru.beeline.techradar.dto.TechCategoryDTO;
-import ru.beeline.techradar.dto.TechDTO;
-import ru.beeline.techradar.dto.TechSubscribeDTO;
+import ru.beeline.techradar.domain.*;
+import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.maper.TechMapper;
-import ru.beeline.techradar.repository.CategoryRepository;
-import ru.beeline.techradar.repository.RingRepository;
-import ru.beeline.techradar.repository.SectorRepository;
-import ru.beeline.techradar.repository.TechCategoryRepository;
-import ru.beeline.techradar.repository.TechRepository;
+import ru.beeline.techradar.repository.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -47,8 +34,11 @@ public class TechService {
     private final CategoryRepository categoryRepository;
     private final SectorRepository sectorRepository;
     private final RingRepository ringRepository;
+    private final BlackListRepository blackListRepository;
+    private final TechBlProductRepository techBlProductRepository;
     private final TechMapper techMapper;
     private final NotificationClient notificationClient;
+    private final ProductClient productClient;
 
     public TechService(RabbitTemplate rabbitTemplate,
                        TechRepository techRepository,
@@ -57,7 +47,10 @@ public class TechService {
                        CategoryRepository categoryRepository,
                        SectorRepository sectorRepository,
                        RingRepository ringRepository,
+                       BlackListRepository blackListRepository,
+                       TechBlProductRepository techBlProductRepository,
                        NotificationClient notificationClient,
+                       ProductClient productClient,
                        @Value("${queue.tech-queue.name}") String techQueueName) {
         this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
@@ -66,12 +59,53 @@ public class TechService {
         this.categoryRepository = categoryRepository;
         this.sectorRepository = sectorRepository;
         this.ringRepository = ringRepository;
+        this.blackListRepository = blackListRepository;
+        this.techBlProductRepository = techBlProductRepository;
         this.techQueueName = techQueueName;
         this.notificationClient = notificationClient;
+        this.productClient = productClient;
     }
 
     public List<Tech> getAllTech() {
         return techRepository.findAllByDeletedDateIsNull();
+    }
+
+    public List<ProductDTO> getProductTech() {
+        List<ProductDTO> result = productClient.getProduct();
+        result.forEach(productDTO -> {
+            productDTO.getTech().forEach(techDTO -> {
+                techDTO.setLabel(techRepository.findById(techDTO.getId()).get().getLabel());
+            });
+        });
+        return result;
+    }
+
+    public void createRelations(List<PostProductTechDTO> techs) {
+        techs.forEach(tech -> {
+            Tech techFromDb = techRepository.findByLabelAndDeletedDateIsNull(tech.getProjLang());
+            if (techFromDb == null) {
+                BlackList blackList = blackListRepository.findBlackListByLabel(tech.getProjLang());
+                if (blackList == null) {
+                    blackList = blackListRepository.save(BlackList.builder()
+                            .label(tech.getProjLang())
+                            .review(false)
+                            .createDate(new Date())
+                            .build());
+                }
+                if (!blackList.getReview()) {
+                    TechBlProduct techBlProduct =
+                            techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
+                    if (techBlProduct == null) {
+                        techBlProductRepository.save(TechBlProduct.builder()
+                                .cmdbCode(tech.getCmdbCode())
+                                .techBlId(blackList.getId())
+                                .build());
+                    }
+                }
+            } else {
+                productClient.postProduct(tech.getCmdbCode(), techFromDb.getId());
+            }
+        });
     }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {

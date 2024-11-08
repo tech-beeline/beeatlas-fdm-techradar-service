@@ -1,0 +1,18 @@
+package ru.beeline.techradar.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@Builder
+public class PostProductTechDTO {
+
+    @JsonProperty("cmdb_code")
+    private String cmdbCode;
+
+    @JsonProperty("proj_lang")
+    private String projLang;
+}

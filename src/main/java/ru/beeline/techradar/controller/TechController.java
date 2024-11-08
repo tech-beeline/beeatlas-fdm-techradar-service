@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.beeline.techradar.domain.Tech;
-import ru.beeline.techradar.dto.PostTechDTO;
-import ru.beeline.techradar.dto.TechDTO;
-import ru.beeline.techradar.dto.TechSubscribeDTO;
+import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.service.TechService;
 
 import javax.validation.Valid;
@@ -37,6 +35,12 @@ public class TechController {
     @GetMapping("/subscribed")
     public List<TechSubscribeDTO> getSubscribed() {
         return techService.getTechSubscribed();
+    }
+
+    @GetMapping("/product-tech")
+    public ResponseEntity createRelations(@RequestBody List<PostProductTechDTO> techs) {
+        techService.createRelations(techs);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping
