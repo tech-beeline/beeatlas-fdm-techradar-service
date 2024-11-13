@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.beeline.techradar.dto.ProductDTO;
 import ru.beeline.techradar.dto.ProductTechRelationDTO;
@@ -42,7 +43,6 @@ public class ProductClient {
     }
 
     public void postProduct(String cmdbCode, Integer techId) {
-        HttpStatus resultStatus = null;
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -51,13 +51,14 @@ public class ProductClient {
             HttpEntity<ProductTechRelationDTO> entity = new HttpEntity(ProductTechRelationDTO.builder()
                     .cmdbCode(cmdbCode)
                     .build(), headers);
-            resultStatus = restTemplate.exchange(productServerUrl + "/api/v1/product-tech-relation/" + techId,
+
+            restTemplate.exchange(productServerUrl + "/api/v1/product-tech-relation/" + techId,
                     HttpMethod.POST, entity, Object.class).getStatusCode();
+
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("relation is not Found");
         } catch (Exception e) {
             log.error(e.getMessage());
-        }
-        if (resultStatus == HttpStatus.NOT_FOUND) {
-            throw new NotFoundException("relation is not Found");
         }
     }
 }
