@@ -31,11 +31,21 @@ public class CustomExceptionHandler {
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
                 .body(e.getMessage());
     }
+
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<Object> handleException(ForbiddenException e) {
         log.error(e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
+                .header("content-type", MediaType.APPLICATION_JSON_VALUE)
+                .body(e.getMessage());
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Object> handleException(NotFoundException e) {
+        log.error(e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
                 .body(e.getMessage());
     }
