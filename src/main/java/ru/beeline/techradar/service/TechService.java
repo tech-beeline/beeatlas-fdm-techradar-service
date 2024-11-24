@@ -80,32 +80,30 @@ public class TechService {
         return result;
     }
 
-    public void createRelations(List<PostProductTechDTO> techs) {
-        techs.forEach(tech -> {
-            Tech techFromDb = techRepository.findByLabelAndDeletedDateIsNull(tech.getProjLang());
-            if (techFromDb == null) {
-                BlackList blackList = blackListRepository.findBlackListByLabel(tech.getProjLang());
-                if (blackList == null) {
-                    blackList = blackListRepository.save(BlackList.builder()
-                            .label(tech.getProjLang())
-                            .review(false)
-                            .createDate(new Date())
+    public void createRelations(PostProductTechDTO tech) {
+        Tech techFromDb = techRepository.findByLabelAndDeletedDateIsNull(tech.getProjLang());
+        if (techFromDb == null) {
+            BlackList blackList = blackListRepository.findBlackListByLabel(tech.getProjLang());
+            if (blackList == null) {
+                blackList = blackListRepository.save(BlackList.builder()
+                        .label(tech.getProjLang())
+                        .review(false)
+                        .createDate(new Date())
+                        .build());
+            }
+            if (!blackList.getReview()) {
+                TechBlProduct techBlProduct =
+                        techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
+                if (techBlProduct == null) {
+                    techBlProductRepository.save(TechBlProduct.builder()
+                            .cmdbCode(tech.getCmdbCode())
+                            .techBlId(blackList.getId())
                             .build());
                 }
-                if (!blackList.getReview()) {
-                    TechBlProduct techBlProduct =
-                            techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
-                    if (techBlProduct == null) {
-                        techBlProductRepository.save(TechBlProduct.builder()
-                                .cmdbCode(tech.getCmdbCode())
-                                .techBlId(blackList.getId())
-                                .build());
-                    }
-                }
-            } else {
-                productClient.postProduct(tech.getCmdbCode(), techFromDb.getId());
             }
-        });
+        } else {
+            productClient.postProduct(tech.getCmdbCode(), techFromDb.getId());
+        }
     }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
