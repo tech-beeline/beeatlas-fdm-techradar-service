@@ -43,8 +43,8 @@ public class TechController {
     }
 
     @PostMapping("/product-relation")
-    public ResponseEntity createRelations(@RequestBody List<PostProductTechDTO> techs) {
-        techService.createRelations(techs);
+    public ResponseEntity createRelations(@RequestBody PostProductTechDTO tech) {
+        techService.createRelations(tech);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
