@@ -81,7 +81,6 @@ public class TechService {
     }
 
     public void createRelations(PostProductTechDTO tech) {
-        try {
             Tech techFromDb = techRepository.findByLabelAndDeletedDateIsNull(tech.getProjLang());
             if (techFromDb == null) {
                 log.info("Tech not found in database for label: {}", tech.getProjLang());
@@ -108,10 +107,7 @@ public class TechService {
             } else {
                 productClient.postProduct(tech.getCmdbCode(), techFromDb.getId());
             }
-        } catch (Exception e) {
-            log.error("Error creating relations for tech: {}", tech, e);
         }
-    }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
         return techCategoryRepository.findByCategory_IdIn(ids)
