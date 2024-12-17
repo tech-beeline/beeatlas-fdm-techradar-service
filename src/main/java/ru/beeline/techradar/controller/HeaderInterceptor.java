@@ -30,7 +30,8 @@ public class HeaderInterceptor implements HandlerInterceptor {
             if(request.getRequestURI().contains("/actuator/prometheus")
                     || request.getRequestURI().contains("/swagger")
                     || request.getRequestURI().contains("/error")
-                    || request.getRequestURI().contains("/api-docs"))
+                    || request.getRequestURI().contains("/api-docs")
+                    || request.getRequestURI().contains("/api/v1/rings"))
             {
                 return true;
             }
