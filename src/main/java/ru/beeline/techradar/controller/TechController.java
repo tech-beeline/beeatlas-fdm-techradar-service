@@ -58,4 +58,11 @@ public class TechController {
         techService.deleteTech(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @DeleteMapping("/{tech_id}/version/{version_id}")
+    public ResponseEntity deleteTechVersion(@PathVariable(name = "tech_id") Integer techId
+            , @PathVariable(name = "version_id") Integer versionId) {
+        techService.deleteTechVersion(techId, versionId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

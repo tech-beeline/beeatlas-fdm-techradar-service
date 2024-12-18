@@ -20,6 +20,7 @@ import ru.beeline.techradar.maper.TechMapper;
 import ru.beeline.techradar.repository.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,7 @@ public class TechService {
     private final TechMapper techMapper;
     private final NotificationClient notificationClient;
     private final ProductClient productClient;
+    private final TechVersionRepository techVersionRepository;
 
     public TechService(RabbitTemplate rabbitTemplate,
                        TechRepository techRepository,
@@ -51,7 +53,8 @@ public class TechService {
                        TechBlProductRepository techBlProductRepository,
                        NotificationClient notificationClient,
                        ProductClient productClient,
-                       @Value("${queue.tech-queue.name}") String techQueueName) {
+                       @Value("${queue.tech-queue.name}") String techQueueName,
+                       TechVersionRepository techVersionRepository) {
         this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
@@ -64,10 +67,11 @@ public class TechService {
         this.techQueueName = techQueueName;
         this.notificationClient = notificationClient;
         this.productClient = productClient;
+        this.techVersionRepository = techVersionRepository;
     }
 
     public List<Tech> getAllTech(Boolean actualTech) {
-        if(actualTech) {
+        if (actualTech) {
             return techRepository.findAllByDeletedDateIsNull();
         } else {
             return techRepository.findAll();
@@ -85,33 +89,33 @@ public class TechService {
     }
 
     public void createRelations(PostProductTechDTO tech) {
-            Tech techFromDb = techRepository.findByLabelAndDeletedDateIsNull(tech.getProjLang());
-            if (techFromDb == null) {
-                log.info("Tech not found in database for label: {}", tech.getProjLang());
-                BlackList blackList = blackListRepository.findBlackListByLabel(tech.getProjLang());
-                if (blackList == null) {
-                    log.info("BlackList entry not found for label: {}. Creating new entry.", tech.getProjLang());
-                    blackList = blackListRepository.save(BlackList.builder()
-                            .label(tech.getProjLang())
-                            .review(false)
-                            .createDate(new Date())
+        Tech techFromDb = techRepository.findByLabelAndDeletedDateIsNull(tech.getProjLang());
+        if (techFromDb == null) {
+            log.info("Tech not found in database for label: {}", tech.getProjLang());
+            BlackList blackList = blackListRepository.findBlackListByLabel(tech.getProjLang());
+            if (blackList == null) {
+                log.info("BlackList entry not found for label: {}. Creating new entry.", tech.getProjLang());
+                blackList = blackListRepository.save(BlackList.builder()
+                        .label(tech.getProjLang())
+                        .review(false)
+                        .createDate(new Date())
+                        .build());
+            }
+            if (!blackList.getReview()) {
+                TechBlProduct techBlProduct =
+                        techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
+                if (techBlProduct == null) {
+                    log.info("Creating new TechBlProduct entry for cmdbCode: {} and techBlId: {}", tech.getCmdbCode(), blackList.getId());
+                    techBlProductRepository.save(TechBlProduct.builder()
+                            .cmdbCode(tech.getCmdbCode())
+                            .techBlId(blackList.getId())
                             .build());
                 }
-                if (!blackList.getReview()) {
-                    TechBlProduct techBlProduct =
-                            techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
-                    if (techBlProduct == null) {
-                        log.info("Creating new TechBlProduct entry for cmdbCode: {} and techBlId: {}", tech.getCmdbCode(), blackList.getId());
-                        techBlProductRepository.save(TechBlProduct.builder()
-                                .cmdbCode(tech.getCmdbCode())
-                                .techBlId(blackList.getId())
-                                .build());
-                    }
-                }
-            } else {
-                productClient.postProduct(tech.getCmdbCode(), techFromDb.getId());
             }
+        } else {
+            productClient.postProduct(tech.getCmdbCode(), techFromDb.getId());
         }
+    }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
         return techCategoryRepository.findByCategory_IdIn(ids)
@@ -279,4 +283,14 @@ public class TechService {
         }
     }
 
+    public void deleteTechVersion(Integer techId, Integer versionId) {
+        if (RequestContext.getRoles().contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        TechVersion techVersion = techVersionRepository.findByTechIdAndIdAndDeletedDateIsNull(techId, versionId);
+        if (techVersion != null) {
+            techVersion.setDeletedDate(LocalDateTime.now());
+            techVersionRepository.save(techVersion);
+        }
+    }
 }

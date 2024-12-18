@@ -8,16 +8,12 @@ import ru.beeline.techradar.exception.ForbiddenException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static ru.beeline.techradar.utils.Constant.USER_ID_HEADER;
-import static ru.beeline.techradar.utils.Constant.USER_PERMISSION_HEADER;
-import static ru.beeline.techradar.utils.Constant.USER_PRODUCTS_IDS_HEADER;
-import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
+import static ru.beeline.techradar.utils.Constant.*;
 
 
 public class HeaderInterceptor implements HandlerInterceptor {
@@ -27,12 +23,15 @@ public class HeaderInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         try {
-            if(request.getRequestURI().contains("/actuator/prometheus")
+            if (request.getRequestURI().contains("/actuator/prometheus")
                     || request.getRequestURI().contains("/swagger")
                     || request.getRequestURI().contains("/error")
                     || request.getRequestURI().contains("/api-docs")
-                    || request.getRequestURI().contains("/api/v1/rings"))
-            {
+                    || request.getRequestURI().contains("/api/v1/rings")
+                    || request.getRequestURI().contains("/api/v1/sectors")
+                    || request.getRequestURI().contains("/api/v1/category")
+                    || (request.getRequestURI().contains("/api/v1/tech") && !request.getRequestURI().contains("/version"))
+            ) {
                 return true;
             }
             Map<String, Object> headers = new HashMap<>();
@@ -49,17 +48,16 @@ public class HeaderInterceptor implements HandlerInterceptor {
             logger.info("Set headers complete");
             return true;
         } catch (Exception e) {
-            //throw new ForbiddenException("403 Forbidden.");
-            return true;
+            throw new ForbiddenException("403 Forbidden.");
         }
     }
 
     private List<String> toList(String value) {
         return Arrays.stream(value.split(","))
                 .map(str -> str.substring(0))
-                .map(str -> str.replaceAll("\"",""))
-                .map(str -> str.replaceAll("]",""))
-                .map(str -> str.replaceAll("\\[",""))
+                .map(str -> str.replaceAll("\"", ""))
+                .map(str -> str.replaceAll("]", ""))
+                .map(str -> str.replaceAll("\\[", ""))
                 .map(String::trim)
                 .collect(Collectors.toList());
     }
