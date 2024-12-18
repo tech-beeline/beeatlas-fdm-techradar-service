@@ -3,14 +3,7 @@ package ru.beeline.techradar.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.service.TechService;
@@ -28,8 +21,8 @@ public class TechController {
     }
 
     @GetMapping
-    public List<Tech> getAllTech() {
-        return techService.getAllTech();
+    public List<Tech> getAllTech(@RequestParam Boolean actualTech) {
+        return techService.getAllTech(actualTech);
     }
 
     @GetMapping("/subscribed")

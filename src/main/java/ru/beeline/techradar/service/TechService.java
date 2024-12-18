@@ -66,8 +66,12 @@ public class TechService {
         this.productClient = productClient;
     }
 
-    public List<Tech> getAllTech() {
-        return techRepository.findAllByDeletedDateIsNull();
+    public List<Tech> getAllTech(Boolean actualTech) {
+        if(actualTech) {
+            return techRepository.findAllByDeletedDateIsNull();
+        } else {
+            return techRepository.findAll();
+        }
     }
 
     public List<ProductDTO> getProductTech() {
