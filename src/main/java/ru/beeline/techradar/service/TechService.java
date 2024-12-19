@@ -71,7 +71,7 @@ public class TechService {
     }
 
     public List<Tech> getAllTech(Boolean actualTech) {
-        if (actualTech) {
+        if (Boolean.TRUE.equals(actualTech)) {
             return techRepository.findAllByDeletedDateIsNull();
         } else {
             return techRepository.findAll();

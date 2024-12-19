@@ -21,7 +21,7 @@ public class TechController {
     }
 
     @GetMapping
-    public List<Tech> getAllTech(@RequestParam Boolean actualTech) {
+    public List<Tech> getAllTech(@RequestParam(required = false) Boolean actualTech) {
         return techService.getAllTech(actualTech);
     }
 
