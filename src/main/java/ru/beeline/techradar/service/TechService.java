@@ -42,19 +42,7 @@ public class TechService {
     private final ProductClient productClient;
     private final TechVersionRepository techVersionRepository;
 
-    public TechService(RabbitTemplate rabbitTemplate,
-                       TechRepository techRepository,
-                       TechCategoryRepository techCategoryRepository,
-                       TechMapper techMapper,
-                       CategoryRepository categoryRepository,
-                       SectorRepository sectorRepository,
-                       RingRepository ringRepository,
-                       BlackListRepository blackListRepository,
-                       TechBlProductRepository techBlProductRepository,
-                       NotificationClient notificationClient,
-                       ProductClient productClient,
-                       @Value("${queue.tech-queue.name}") String techQueueName,
-                       TechVersionRepository techVersionRepository) {
+    public TechService(RabbitTemplate rabbitTemplate, TechRepository techRepository, TechCategoryRepository techCategoryRepository, TechMapper techMapper, CategoryRepository categoryRepository, SectorRepository sectorRepository, RingRepository ringRepository, BlackListRepository blackListRepository, TechBlProductRepository techBlProductRepository, NotificationClient notificationClient, ProductClient productClient, @Value("${queue.tech-queue.name}") String techQueueName, TechVersionRepository techVersionRepository) {
         this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
@@ -95,21 +83,13 @@ public class TechService {
             BlackList blackList = blackListRepository.findBlackListByLabel(tech.getProjLang());
             if (blackList == null) {
                 log.info("BlackList entry not found for label: {}. Creating new entry.", tech.getProjLang());
-                blackList = blackListRepository.save(BlackList.builder()
-                        .label(tech.getProjLang())
-                        .review(false)
-                        .createDate(new Date())
-                        .build());
+                blackList = blackListRepository.save(BlackList.builder().label(tech.getProjLang()).review(false).createDate(new Date()).build());
             }
             if (!blackList.getReview()) {
-                TechBlProduct techBlProduct =
-                        techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
+                TechBlProduct techBlProduct = techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
                 if (techBlProduct == null) {
                     log.info("Creating new TechBlProduct entry for cmdbCode: {} and techBlId: {}", tech.getCmdbCode(), blackList.getId());
-                    techBlProductRepository.save(TechBlProduct.builder()
-                            .cmdbCode(tech.getCmdbCode())
-                            .techBlId(blackList.getId())
-                            .build());
+                    techBlProductRepository.save(TechBlProduct.builder().cmdbCode(tech.getCmdbCode()).techBlId(blackList.getId()).build());
                 }
             }
         } else {
@@ -118,8 +98,7 @@ public class TechService {
     }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
-        return techCategoryRepository.findByCategory_IdIn(ids)
-                .stream().map(TechCategory::getTech).collect(Collectors.toList());
+        return techCategoryRepository.findByCategory_IdIn(ids).stream().map(TechCategory::getTech).collect(Collectors.toList());
     }
 
     public List<TechSubscribeDTO> getTechSubscribed() {
@@ -128,9 +107,7 @@ public class TechService {
         if (techIds.isEmpty()) {
             return new ArrayList<>();
         }
-        return techRepository.findAllByIdInAndDeletedDateIsNull(techIds).stream()
-                .map(techMapper::toTechSubscribeDTO)
-                .collect(Collectors.toList());
+        return techRepository.findAllByIdInAndDeletedDateIsNull(techIds).stream().map(techMapper::toTechSubscribeDTO).collect(Collectors.toList());
     }
 
     public void addTech(List<PostTechDTO> techDTOs) throws JsonProcessingException {
@@ -142,20 +119,15 @@ public class TechService {
         List<Tech> existTechList = techRepository.findAllByLabelIn(labels);
         if (!existTechList.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writeValueAsString(
-                    existTechList.stream().map(tech -> Collections.singletonMap("label", tech.getLabel()))
-                            .collect(Collectors.toList())
-            );
+            String json = mapper.writeValueAsString(existTechList.stream().map(tech -> Collections.singletonMap("label", tech.getLabel())).collect(Collectors.toList()));
             throw new ConflictException(json);
         }
         List<ObjectNode> messageList = new ArrayList<>();
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
-            Ring ring = ringRepository.findById(techDTOtoSave.getRingId())
-                    .orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
+            Ring ring = ringRepository.findById(techDTOtoSave.getRingId()).orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
             techForSave.setRing(ring);
-            Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
+            Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId()).orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
             techForSave.setSector(sector);
             techForSave.setCreatedDate(LocalDate.now());
             techForSave.setLastModifiedDate(LocalDate.now());
@@ -169,63 +141,50 @@ public class TechService {
     }
 
     private void saveTechCategoryWithoutDuplicate(Tech savedTech, List<TechCategoryDTO> categories) {
-        Set<TechCategory> techCategories = categories.stream()
-                .map(category -> {
-                    Category categoryEntity = categoryRepository.findById(category.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
-                    return TechCategory.builder()
-                            .tech(savedTech)
-                            .category(categoryEntity)
-                            .build();
-                })
-                .collect(Collectors.toSet());
+        Set<TechCategory> techCategories = categories.stream().map(category -> {
+            Category categoryEntity = categoryRepository.findById(category.getId()).orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
+            return TechCategory.builder().tech(savedTech).category(categoryEntity).build();
+        }).collect(Collectors.toSet());
 
         techCategoryRepository.saveAll(techCategories);
     }
 
-    public void patchTech(List<TechDTO> techDTOS) {
+    public void patchTech(Integer id, TechDTO techDTO) {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
-        validateTechDTOFields(techDTOS);
-        List<Tech> existTechList = new ArrayList<>();
-        techDTOS.forEach(techDTO -> {
-            Tech tech = techRepository.findById(techDTO.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + techDTO.getId() + " not found."));
-            existTechList.add(tech);
-        });
+        validateTechDTOFields(techDTO);
+        if (techRepository.findAllByLabelIn(Collections.singletonList(techDTO.getLabel())).get(0).getId().equals(id)) {
+            throw new ConflictException("Поменять название технологии");
+        }
+        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + techDTO.getId() + " not found."));
         List<ObjectNode> messageList = new ArrayList<>();
-        existTechList.forEach(techDTOtoPatch -> {
-            TechDTO donor = techDTOS.stream().filter(techDTO -> techDTO.getId().equals(techDTOtoPatch.getId())).findFirst().get();
-            techDTOtoPatch.setLastModifiedDate(LocalDate.now());
-            if (donor.getLabel() != null) {
-                techDTOtoPatch.setLabel(donor.getLabel());
-            }
-            if (donor.getDescr() != null) {
-                techDTOtoPatch.setDescription(donor.getDescr());
-            }
-            if (donor.getRingId() != null) {
-                Ring ring = ringRepository.findById(donor.getRingId())
-                        .orElseThrow(() -> new IllegalArgumentException("Ring with id=" + donor.getRingId() + " not found."));
-                techDTOtoPatch.setRing(ring);
-            }
-            if (donor.getSectorId() != null) {
-                Sector sector = sectorRepository.findById(donor.getSectorId())
-                        .orElseThrow(() -> new IllegalArgumentException("Sector with id=" + donor.getSectorId() + " not found."));
-                techDTOtoPatch.setSector(sector);
-            }
-            if (donor.getLink() != null) {
-                techDTOtoPatch.setLink(donor.getLink());
-            }
-
-            Tech savedTech = techRepository.save(techDTOtoPatch);
-            techCategoryRepository.deleteAllByTech(savedTech);
-            techCategoryRepository.flush();
-            if (donor.getCategories() != null && !donor.getCategories().isEmpty()) {
-                saveTechCategoryWithoutDuplicate(savedTech, donor.getCategories());
-            }
-            addMessage(savedTech.getId(), "UPDATE", messageList, savedTech.getLabel());
-        });
+        tech.setLastModifiedDate(LocalDate.now());
+        if (techDTO.getLabel() != null) {
+            tech.setLabel(techDTO.getLabel());
+        }
+        if (techDTO.getDescr() != null) {
+            tech.setDescription(techDTO.getDescr());
+        }
+        if (techDTO.getRingId() != null) {
+            Ring ring = ringRepository.findById(techDTO.getRingId()).orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTO.getRingId() + " not found."));
+            tech.setRing(ring);
+        }
+        if (techDTO.getSectorId() != null) {
+            Sector sector = sectorRepository.findById(techDTO.getSectorId()).orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTO.getSectorId() + " not found."));
+            tech.setSector(sector);
+        }
+        if (techDTO.getLink() != null) {
+            tech.setLink(techDTO.getLink());
+        }
+        tech.setDeletedDate(null);
+        Tech savedTech = techRepository.save(tech);
+        techCategoryRepository.deleteAllByTech(savedTech);
+        techCategoryRepository.flush();
+        if (techDTO.getCategories() != null && !techDTO.getCategories().isEmpty()) {
+            saveTechCategoryWithoutDuplicate(savedTech, techDTO.getCategories());
+        }
+        addMessage(savedTech.getId(), "UPDATE", messageList, savedTech.getLabel());
         sendMessageToTechCapabilityQueue(techQueueName, messageList.toString());
     }
 
@@ -256,8 +215,7 @@ public class TechService {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
-        Tech tech = techRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
+        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         tech.setDeletedDate(LocalDate.now());
         techRepository.save(tech);
     }
@@ -265,21 +223,19 @@ public class TechService {
 
     private void validatePostTechDTOFields(List<PostTechDTO> techDTOs) {
         for (PostTechDTO dto : techDTOs) {
-            if (dto.getLabel() == null || dto.getLabel().isEmpty() ||
-                    dto.getRingId() == null ||
-                    dto.getSectorId() == null) {
+            if (dto.getLabel() == null || dto.getLabel().isEmpty() || dto.getRingId() == null || dto.getSectorId() == null) {
                 throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', or 'sector_id' is empty.");
             }
         }
     }
 
-    private void validateTechDTOFields(List<TechDTO> techDTOs) {
-        for (TechDTO dto : techDTOs) {
-            if (dto.getLabel() == null || dto.getLabel().isEmpty() ||
-                    dto.getRingId() == null ||
-                    dto.getSectorId() == null || dto.getId() == null) {
-                throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
-            }
+    private void validateTechDTOFields(TechDTO techDTO) {
+        if (techDTO.getLabel() == null
+                || techDTO.getLabel().isEmpty()
+                || techDTO.getRingId() == null
+                || techDTO.getSectorId() == null
+                || techDTO.getId() == null) {
+            throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
         }
     }
 

@@ -47,9 +47,10 @@ public class TechController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PatchMapping
-    public ResponseEntity patchTech(@RequestBody List<TechDTO> tech) {
-        techService.patchTech(tech);
+    @PatchMapping("/{id}")
+    public ResponseEntity patchTech(@PathVariable Integer id,
+                                    @RequestBody TechDTO tech) {
+        techService.patchTech(id, tech);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
