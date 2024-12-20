@@ -32,6 +32,9 @@ public class HeaderInterceptor implements HandlerInterceptor {
                     || request.getRequestURI().contains("/api/v1/category")
                     || (request.getRequestURI().contains("/api/v1/tech") && !request.getRequestURI().contains("/version"))
             ) {
+                Map<String, Object> headers = new HashMap<>();
+                RequestContext.setHeaders(headers);
+                headers.put(USER_ROLES_HEADER, toList(request.getHeader(USER_ROLES_HEADER)));
                 return true;
             }
             Map<String, Object> headers = new HashMap<>();
