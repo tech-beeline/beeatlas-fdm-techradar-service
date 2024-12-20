@@ -17,6 +17,7 @@ import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.maper.TechMapper;
+import ru.beeline.techradar.maper.TechVersionMapper;
 import ru.beeline.techradar.repository.*;
 
 import java.time.LocalDate;
@@ -38,15 +39,17 @@ public class TechService {
     private final BlackListRepository blackListRepository;
     private final TechBlProductRepository techBlProductRepository;
     private final TechMapper techMapper;
+    private final TechVersionMapper techVersionMapper;
     private final NotificationClient notificationClient;
     private final ProductClient productClient;
     private final TechVersionRepository techVersionRepository;
 
-    public TechService(RabbitTemplate rabbitTemplate, TechRepository techRepository, TechCategoryRepository techCategoryRepository, TechMapper techMapper, CategoryRepository categoryRepository, SectorRepository sectorRepository, RingRepository ringRepository, BlackListRepository blackListRepository, TechBlProductRepository techBlProductRepository, NotificationClient notificationClient, ProductClient productClient, @Value("${queue.tech-queue.name}") String techQueueName, TechVersionRepository techVersionRepository) {
+    public TechService(RabbitTemplate rabbitTemplate, TechRepository techRepository, TechCategoryRepository techCategoryRepository, TechMapper techMapper, TechVersionMapper techVersionMapper, CategoryRepository categoryRepository, SectorRepository sectorRepository, RingRepository ringRepository, BlackListRepository blackListRepository, TechBlProductRepository techBlProductRepository, NotificationClient notificationClient, ProductClient productClient, @Value("${queue.tech-queue.name}") String techQueueName, TechVersionRepository techVersionRepository) {
         this.rabbitTemplate = rabbitTemplate;
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
+        this.techVersionMapper = techVersionMapper;
         this.categoryRepository = categoryRepository;
         this.sectorRepository = sectorRepository;
         this.ringRepository = ringRepository;
@@ -58,12 +61,21 @@ public class TechService {
         this.techVersionRepository = techVersionRepository;
     }
 
-    public List<Tech> getAllTech(Boolean actualTech) {
-        if (Boolean.TRUE.equals(actualTech)) {
-            return techRepository.findAllByDeletedDateIsNull();
-        } else {
-            return techRepository.findAll();
-        }
+    public List<TechAdvancedDTO> getAllTech(Boolean actualTech) {
+        List<Tech> techs = Boolean.TRUE.equals(actualTech) ? techRepository.findAllByDeletedDateIsNull() : techRepository.findAll();
+        List<TechAdvancedDTO> result = new ArrayList<>();
+        techs.forEach(tech -> {
+            List<TechVersionDTO> versionsResult = new ArrayList<>();
+            List<TechVersion> techVersions = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(tech.getId());
+            techVersions.forEach(techVersion -> {
+                versionsResult.add(techVersionMapper.toTechVersionDTO(techVersion, ringRepository.findById(techVersion.getStatusId()).get()));
+            });
+            TechAdvancedDTO techAdvancedDTO = techMapper.toTechAdvancedDTO(tech);
+            techAdvancedDTO.setVersions(versionsResult);
+            result.add(techAdvancedDTO);
+
+        });
+        return result;
     }
 
     public List<ProductDTO> getProductTech() {

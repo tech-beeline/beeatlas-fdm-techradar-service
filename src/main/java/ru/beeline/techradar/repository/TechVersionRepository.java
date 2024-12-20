@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface TechVersionRepository extends JpaRepository<TechVersion, Long> {
     TechVersion findByTechIdAndIdAndDeletedDateIsNull(Integer techId, Integer id);
+    List<TechVersion> findAllByTechIdAndDeletedDateIsNull(Integer techId);
 }
