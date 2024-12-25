@@ -3,9 +3,11 @@ package ru.beeline.techradar.maper;
 import org.springframework.stereotype.Component;
 import ru.beeline.techradar.domain.Ring;
 import ru.beeline.techradar.domain.TechVersion;
+import ru.beeline.techradar.dto.PostTechVersionDTO;
 import ru.beeline.techradar.dto.RingDTO;
 import ru.beeline.techradar.dto.TechVersionDTO;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Component
@@ -30,4 +32,13 @@ public class TechVersionMapper {
         );
     }
 
+    public TechVersion toTechVersion(PostTechVersionDTO postTechVersionDTO, Integer techId) {
+        return TechVersion.builder()
+                .versionStart(postTechVersionDTO.getVersionStart())
+                .versionEnd(postTechVersionDTO.getVersionEnd())
+                .statusId(postTechVersionDTO.getStatusId())
+                .createdDate(LocalDateTime.now())
+                .techId(techId)
+                .build();
+    }
 }

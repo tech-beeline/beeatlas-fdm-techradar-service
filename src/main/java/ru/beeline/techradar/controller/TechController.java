@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.service.TechService;
 
@@ -65,5 +64,12 @@ public class TechController {
             , @PathVariable(name = "version_id") Integer versionId) {
         techService.deleteTechVersion(techId, versionId);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PostMapping("/{tech_id}/version")
+    public ResponseEntity createTechVersion(@RequestBody List<PostTechVersionDTO> postTechVersionDTOS,
+                                            @PathVariable(name = "tech_id") Integer techId) {
+        techService.createTechVersion(postTechVersionDTOS, techId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
