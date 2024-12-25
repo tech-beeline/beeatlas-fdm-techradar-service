@@ -353,4 +353,14 @@ public class TechService {
             throw new IllegalArgumentException("Bad Request: поле 'statusId' не должно быть пустым.");
         }
     }
+
+    public void patchTechVersion(PostTechVersionDTO postTechVersionDTO, Integer techId, Integer idVersion){
+        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        techRepository.findById(techId).orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
+        techVersionRepository.findById(idVersion.longValue()).orElseThrow(() ->
+                new NotFoundException("Not found: запись в таблице 'tech_version' с данным id не найден."));
+
+    }
 }
