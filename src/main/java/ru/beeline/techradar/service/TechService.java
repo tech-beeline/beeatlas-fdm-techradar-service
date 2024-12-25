@@ -16,9 +16,11 @@ import ru.beeline.techradar.domain.*;
 import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
+import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.maper.TechMapper;
 import ru.beeline.techradar.maper.TechVersionMapper;
 import ru.beeline.techradar.repository.*;
+import ru.beeline.techradar.tree.IntervalTree;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -232,7 +234,6 @@ public class TechService {
         techRepository.save(tech);
     }
 
-
     private void validatePostTechDTOFields(List<PostTechDTO> techDTOs) {
         for (PostTechDTO dto : techDTOs) {
             if (dto.getLabel() == null || dto.getLabel().isEmpty() || dto.getRingId() == null || dto.getSectorId() == null) {
@@ -259,6 +260,97 @@ public class TechService {
         if (techVersion != null) {
             techVersion.setDeletedDate(LocalDateTime.now());
             techVersionRepository.save(techVersion);
+        }
+    }
+
+    public void createTechVersion(List<PostTechVersionDTO> postTechVersionDTOS, Integer techId) {
+        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        techRepository.findById(techId).orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
+        List<TechVersion> result = new ArrayList<>();
+        IntervalTree newIntervalTree = new IntervalTree();
+
+        for (PostTechVersionDTO postTechVersion : postTechVersionDTOS) {
+            validatePostTechVersionDTO(postTechVersion);
+            ringRepository.findById(postTechVersion.getStatusId()).orElseThrow(() ->
+                    new IllegalArgumentException("Bad Request: Not found record in the ring table"));
+            if (postTechVersion.getVersionStart() == null || postTechVersion.getVersionStart().isEmpty()) {
+                postTechVersion.setVersionStart("0.0.0");
+            } else {
+                postTechVersion.setVersionStart(validateStringVersion(postTechVersion.getVersionStart()));
+            }
+            if (postTechVersion.getVersionEnd() == null || postTechVersion.getVersionEnd().isEmpty()) {
+                postTechVersion.setVersionEnd("9999.9999.9999");
+            } else {
+                postTechVersion.setVersionEnd(validateStringVersion(postTechVersion.getVersionEnd()));
+            }
+            validateVersions(postTechVersion.getVersionStart(), postTechVersion.getVersionEnd());
+            TechVersion versionRange = techVersionMapper.toTechVersion(postTechVersion, techId);
+            if (newIntervalTree.overlaps(versionRange)) {
+                throw new IllegalArgumentException("Bad Request: Пересечение диапозонов версий в теле запроса.");
+            }
+            newIntervalTree.insert(versionRange);
+            result.add(versionRange);
+        }
+        List<TechVersion> existingtechVersionList = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(techId);
+        IntervalTree existingIntervalTree = new IntervalTree();
+        for (TechVersion existingVersion : existingtechVersionList) {
+            existingIntervalTree.insert(existingVersion);
+        }
+        for (TechVersion newRange : result) {
+            if (existingIntervalTree.overlaps(newRange)) {
+                throw new IllegalArgumentException("Bad Request: Новые версии пересекаются с существующими.");
+            }
+        }
+        techVersionRepository.saveAll(result);
+    }
+
+    private void validateVersions(String startVersion, String endVersion) {
+        long startVersionLong = convertVersionStringToLong(startVersion);
+        long endVersionLong = convertVersionStringToLong(endVersion);
+        if (startVersionLong >= endVersionLong) {
+            throw new IllegalArgumentException("Bad Request: 'startVersion' должно быть меньше, чем 'endVersion'.");
+        }
+    }
+
+    private long convertVersionStringToLong(String versionString) {
+        String[] parts = versionString.split("\\.");
+        for (String part : parts) {
+            int partInt = Integer.parseInt(part);
+            if (partInt < 0 || partInt > 9999) {
+                throw new IllegalArgumentException("Bad Request: Каждая часть версии должна быть в диапазоне от 0 до 9999.");
+            }
+        }
+        long result = 0;
+        for (String part : parts) {
+            result = result * 10000 + Integer.parseInt(part);
+        }
+        return result;
+    }
+
+    private String validateStringVersion(String version) {
+        String regex = "^\\d+\\.\\d+\\.\\d+$";
+        String regex1 = "^\\d+$";
+        String regex2 = "^\\d+\\.\\d+$";
+        if (version.matches(regex)) {
+            return version;
+        } else if (version.matches(regex1)) {
+            return version + ".0.0";
+        } else if (version.matches(regex2)) {
+            return version + ".0";
+        } else {
+            throw new IllegalArgumentException("Строка не соответствует формату");
+        }
+    }
+
+    private void validatePostTechVersionDTO(PostTechVersionDTO postTechVersionDTO) {
+        if ((postTechVersionDTO.getVersionStart() == null || postTechVersionDTO.getVersionStart().isEmpty()) &&
+                (postTechVersionDTO.getVersionEnd() == null || postTechVersionDTO.getVersionEnd().isEmpty())) {
+            throw new IllegalArgumentException("Bad Request: 'VersionStart' и 'VersionEnd' не заполнены.");
+        }
+        if (postTechVersionDTO.getStatusId() == null) {
+            throw new IllegalArgumentException("Bad Request: поле 'statusId' не должно быть пустым.");
         }
     }
 }
