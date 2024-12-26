@@ -285,6 +285,8 @@ public class TechService {
             } else {
                 postTechVersion.setVersionEnd(validateStringVersion(postTechVersion.getVersionEnd()));
             }
+            postTechVersion.setVersionStart(removeLeadingZeros(postTechVersion.getVersionStart()));
+            postTechVersion.setVersionEnd(removeLeadingZeros(postTechVersion.getVersionEnd()));
             validateVersions(postTechVersion.getVersionStart(), postTechVersion.getVersionEnd());
             TechVersion versionRange = techVersionMapper.toTechVersion(postTechVersion, techId);
             if (newIntervalTree.overlaps(versionRange)) {
@@ -304,6 +306,17 @@ public class TechService {
             }
         }
         techVersionRepository.saveAll(result);
+    }
+
+    private String removeLeadingZeros(String version) {
+        String[] parts = version.split("\\.");
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Bad Request: Версия должна состоять из трех частей, разделенных точками.");
+        }
+        String major = Long.toString(Long.parseLong(parts[0]));
+        String minor = Long.toString(Long.parseLong(parts[1]));
+        String patch = Long.toString(Long.parseLong(parts[2]));
+        return major + "." + minor + "." + patch;
     }
 
     private void validateVersions(String startVersion, String endVersion) {
