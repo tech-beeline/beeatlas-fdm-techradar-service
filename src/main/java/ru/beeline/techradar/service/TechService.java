@@ -354,13 +354,40 @@ public class TechService {
         }
     }
 
-    public void patchTechVersion(PostTechVersionDTO postTechVersionDTO, Integer techId, Integer idVersion){
+    public void patchTechVersion(PostTechVersionDTO postTechVersionDTO, Integer techId, Integer idVersion) {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
         techRepository.findById(techId).orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
-        techVersionRepository.findById(idVersion.longValue()).orElseThrow(() ->
+        TechVersion currentVersion = techVersionRepository.findById(idVersion).orElseThrow(() ->
                 new NotFoundException("Not found: запись в таблице 'tech_version' с данным id не найден."));
-
+        validatePostTechVersionDTO(postTechVersionDTO);
+        ringRepository.findById(postTechVersionDTO.getStatusId()).orElseThrow(() ->
+                new IllegalArgumentException("Bad Request: Not found record in the ring table"));
+        if (postTechVersionDTO.getVersionStart() == null || postTechVersionDTO.getVersionStart().isEmpty()) {
+            postTechVersionDTO.setVersionStart("0.0.0");
+        } else {
+            postTechVersionDTO.setVersionStart(validateStringVersion(postTechVersionDTO.getVersionStart()));
+        }
+        if (postTechVersionDTO.getVersionEnd() == null || postTechVersionDTO.getVersionEnd().isEmpty()) {
+            postTechVersionDTO.setVersionEnd("9999.9999.9999");
+        } else {
+            postTechVersionDTO.setVersionEnd(validateStringVersion(postTechVersionDTO.getVersionEnd()));
+        }
+        validateVersions(postTechVersionDTO.getVersionStart(), postTechVersionDTO.getVersionEnd());
+        List<TechVersion> existingtechVersionList = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(techId);
+        IntervalTree existingIntervalTree = new IntervalTree();
+        for (TechVersion existingVersion : existingtechVersionList) {
+            if (existingVersion.getId().equals(idVersion)) {
+                continue;
+            }
+            existingIntervalTree.insert(existingVersion);
+        }
+        TechVersion updatedVersion = techVersionMapper.toTechVersion(postTechVersionDTO, techId);
+        updatedVersion.setId(currentVersion.getId());
+        if (existingIntervalTree.overlaps(updatedVersion)) {
+            throw new IllegalArgumentException("Bad Request: Новая версия пересекается с существующими.");
+        }
+        techVersionRepository.save(updatedVersion);
     }
 }
