@@ -72,4 +72,12 @@ public class TechController {
         techService.createTechVersion(postTechVersionDTOS, techId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @PatchMapping("/{tech_id}/version/{id_version}")
+    public ResponseEntity patchTechVersion(@RequestBody PostTechVersionDTO postTechVersionDTO,
+                                           @PathVariable(name = "tech_id") Integer techId,
+                                           @PathVariable(name = "id_version") Integer idVersion) {
+        techService.patchTechVersion(postTechVersionDTO, techId, idVersion);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
