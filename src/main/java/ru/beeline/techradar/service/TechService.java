@@ -168,10 +168,13 @@ public class TechService {
             throw new ForbiddenException("403 Forbidden.");
         }
         validateTechDTOFields(techDTO);
-        if (techRepository.findAllByLabelIn(Collections.singletonList(techDTO.getLabel())).get(0).getId().equals(id)) {
-            throw new ConflictException("Поменять название технологии");
+        List<Tech> existingTechs = techRepository.findAllByLabelIn(Collections.singletonList(techDTO.getLabel()));
+        for (Tech existingTech : existingTechs) {
+            if (!existingTech.getId().equals(id)) {
+                throw new ConflictException("Поменять название технологии");
+            }
         }
-        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + techDTO.getId() + " not found."));
+        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         List<ObjectNode> messageList = new ArrayList<>();
         tech.setLastModifiedDate(LocalDate.now());
         if (techDTO.getLabel() != null) {
@@ -246,8 +249,7 @@ public class TechService {
         if (techDTO.getLabel() == null
                 || techDTO.getLabel().isEmpty()
                 || techDTO.getRingId() == null
-                || techDTO.getSectorId() == null
-                || techDTO.getId() == null) {
+                || techDTO.getSectorId() == null) {
             throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
         }
     }
