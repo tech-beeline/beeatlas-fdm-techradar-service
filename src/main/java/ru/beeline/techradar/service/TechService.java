@@ -389,6 +389,8 @@ public class TechService {
         } else {
             postTechVersionDTO.setVersionEnd(validateStringVersion(postTechVersionDTO.getVersionEnd()));
         }
+        postTechVersionDTO.setVersionStart(removeLeadingZeros(postTechVersionDTO.getVersionStart()));
+        postTechVersionDTO.setVersionEnd(removeLeadingZeros(postTechVersionDTO.getVersionEnd()));
         validateVersions(postTechVersionDTO.getVersionStart(), postTechVersionDTO.getVersionEnd());
         List<TechVersion> existingtechVersionList = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(techId);
         IntervalTree existingIntervalTree = new IntervalTree();
