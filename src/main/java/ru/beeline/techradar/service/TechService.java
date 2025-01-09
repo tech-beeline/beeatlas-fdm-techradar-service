@@ -168,10 +168,13 @@ public class TechService {
             throw new ForbiddenException("403 Forbidden.");
         }
         validateTechDTOFields(techDTO);
-        if (techRepository.findAllByLabelIn(Collections.singletonList(techDTO.getLabel())).get(0).getId().equals(id)) {
-            throw new ConflictException("Поменять название технологии");
+        List<Tech> existingTechs = techRepository.findAllByLabelIn(Collections.singletonList(techDTO.getLabel()));
+        for (Tech existingTech : existingTechs) {
+            if (!existingTech.getId().equals(id)) {
+                throw new ConflictException("Поменять название технологии");
+            }
         }
-        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + techDTO.getId() + " not found."));
+        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         List<ObjectNode> messageList = new ArrayList<>();
         tech.setLastModifiedDate(LocalDate.now());
         if (techDTO.getLabel() != null) {
@@ -246,8 +249,7 @@ public class TechService {
         if (techDTO.getLabel() == null
                 || techDTO.getLabel().isEmpty()
                 || techDTO.getRingId() == null
-                || techDTO.getSectorId() == null
-                || techDTO.getId() == null) {
+                || techDTO.getSectorId() == null) {
             throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
         }
     }
@@ -285,6 +287,8 @@ public class TechService {
             } else {
                 postTechVersion.setVersionEnd(validateStringVersion(postTechVersion.getVersionEnd()));
             }
+            postTechVersion.setVersionStart(removeLeadingZeros(postTechVersion.getVersionStart()));
+            postTechVersion.setVersionEnd(removeLeadingZeros(postTechVersion.getVersionEnd()));
             validateVersions(postTechVersion.getVersionStart(), postTechVersion.getVersionEnd());
             TechVersion versionRange = techVersionMapper.toTechVersion(postTechVersion, techId);
             if (newIntervalTree.overlaps(versionRange)) {
@@ -304,6 +308,17 @@ public class TechService {
             }
         }
         techVersionRepository.saveAll(result);
+    }
+
+    private String removeLeadingZeros(String version) {
+        String[] parts = version.split("\\.");
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Bad Request: Версия должна состоять из трех частей, разделенных точками.");
+        }
+        String major = Long.toString(Long.parseLong(parts[0]));
+        String minor = Long.toString(Long.parseLong(parts[1]));
+        String patch = Long.toString(Long.parseLong(parts[2]));
+        return major + "." + minor + "." + patch;
     }
 
     private void validateVersions(String startVersion, String endVersion) {
