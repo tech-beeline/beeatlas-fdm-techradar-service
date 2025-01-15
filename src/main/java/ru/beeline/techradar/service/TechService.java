@@ -2,11 +2,7 @@ package ru.beeline.techradar.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.MessageDeliveryMode;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.client.NotificationClient;
@@ -31,8 +27,6 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class TechService {
-    private String techQueueName;
-    private RabbitTemplate rabbitTemplate;
     private final TechRepository techRepository;
     private final TechCategoryRepository techCategoryRepository;
     private final CategoryRepository categoryRepository;
@@ -46,8 +40,7 @@ public class TechService {
     private final ProductClient productClient;
     private final TechVersionRepository techVersionRepository;
 
-    public TechService(RabbitTemplate rabbitTemplate, TechRepository techRepository, TechCategoryRepository techCategoryRepository, TechMapper techMapper, TechVersionMapper techVersionMapper, CategoryRepository categoryRepository, SectorRepository sectorRepository, RingRepository ringRepository, BlackListRepository blackListRepository, TechBlProductRepository techBlProductRepository, NotificationClient notificationClient, ProductClient productClient, @Value("${queue.tech-queue.name}") String techQueueName, TechVersionRepository techVersionRepository) {
-        this.rabbitTemplate = rabbitTemplate;
+    public TechService(TechRepository techRepository, TechCategoryRepository techCategoryRepository, TechMapper techMapper, TechVersionMapper techVersionMapper, CategoryRepository categoryRepository, SectorRepository sectorRepository, RingRepository ringRepository, BlackListRepository blackListRepository, TechBlProductRepository techBlProductRepository, NotificationClient notificationClient, ProductClient productClient, TechVersionRepository techVersionRepository) {
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
@@ -57,7 +50,6 @@ public class TechService {
         this.ringRepository = ringRepository;
         this.blackListRepository = blackListRepository;
         this.techBlProductRepository = techBlProductRepository;
-        this.techQueueName = techQueueName;
         this.notificationClient = notificationClient;
         this.productClient = productClient;
         this.techVersionRepository = techVersionRepository;
@@ -136,7 +128,6 @@ public class TechService {
             String json = mapper.writeValueAsString(existTechList.stream().map(tech -> Collections.singletonMap("label", tech.getLabel())).collect(Collectors.toList()));
             throw new ConflictException(json);
         }
-        List<ObjectNode> messageList = new ArrayList<>();
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
             Ring ring = ringRepository.findById(techDTOtoSave.getRingId()).orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
@@ -149,9 +140,7 @@ public class TechService {
             if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
             }
-            addMessage(savedTech.getId(), "CREATE", messageList, savedTech.getLabel());
         });
-        sendMessageToTechCapabilityQueue(techQueueName, messageList.toString());
     }
 
     private void saveTechCategoryWithoutDuplicate(Tech savedTech, List<TechCategoryDTO> categories) {
@@ -175,7 +164,6 @@ public class TechService {
             }
         }
         Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
-        List<ObjectNode> messageList = new ArrayList<>();
         tech.setLastModifiedDate(LocalDate.now());
         if (techDTO.getLabel() != null) {
             tech.setLabel(techDTO.getLabel());
@@ -201,31 +189,6 @@ public class TechService {
         if (techDTO.getCategories() != null && !techDTO.getCategories().isEmpty()) {
             saveTechCategoryWithoutDuplicate(savedTech, techDTO.getCategories());
         }
-        addMessage(savedTech.getId(), "UPDATE", messageList, savedTech.getLabel());
-        sendMessageToTechCapabilityQueue(techQueueName, messageList.toString());
-    }
-
-    private void addMessage(Integer id, String changeType, List<ObjectNode> messageList, String name) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            ObjectNode messagePayload = objectMapper.createObjectNode();
-            messagePayload.put("entity_id", id);
-            messagePayload.put("name", name);
-            messagePayload.put("change_type", changeType);
-
-            messageList.add(messagePayload);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void sendMessageToTechCapabilityQueue(String queue, String message) {
-        rabbitTemplate.convertAndSend(queue, message, messagePostProcessor -> {
-            messagePostProcessor.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
-            return messagePostProcessor;
-        });
     }
 
     public void deleteTech(Integer id) {
