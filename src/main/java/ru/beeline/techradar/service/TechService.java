@@ -354,21 +354,28 @@ public class TechService {
         }
         postTechVersionDTO.setVersionStart(removeLeadingZeros(postTechVersionDTO.getVersionStart()));
         postTechVersionDTO.setVersionEnd(removeLeadingZeros(postTechVersionDTO.getVersionEnd()));
-        validateVersions(postTechVersionDTO.getVersionStart(), postTechVersionDTO.getVersionEnd());
-        List<TechVersion> existingtechVersionList = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(techId);
-        IntervalTree existingIntervalTree = new IntervalTree();
-        for (TechVersion existingVersion : existingtechVersionList) {
-            if (existingVersion.getId().equals(idVersion)) {
-                continue;
+        PostTechVersionDTO currentTechVersionDTO = PostTechVersionDTO.builder()
+                .versionStart(currentVersion.getVersionStart())
+                .versionEnd(currentVersion.getVersionEnd())
+                .statusId(currentVersion.getStatusId())
+                .build();
+        if (!currentTechVersionDTO.equals(postTechVersionDTO)) {
+            validateVersions(postTechVersionDTO.getVersionStart(), postTechVersionDTO.getVersionEnd());
+            List<TechVersion> existingtechVersionList = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(techId);
+            IntervalTree existingIntervalTree = new IntervalTree();
+            for (TechVersion existingVersion : existingtechVersionList) {
+                if (existingVersion.getId().equals(idVersion)) {
+                    continue;
+                }
+                existingIntervalTree.insert(existingVersion);
             }
-            existingIntervalTree.insert(existingVersion);
+            TechVersion updatedVersion = techVersionMapper.toTechVersion(postTechVersionDTO, techId);
+            updatedVersion.setId(currentVersion.getId());
+            updatedVersion.setLastModifiedDate(LocalDateTime.now());
+            if (existingIntervalTree.overlaps(updatedVersion)) {
+                throw new IllegalArgumentException("Bad Request: Новая версия пересекается с существующими.");
+            }
+            techVersionRepository.save(updatedVersion);
         }
-        TechVersion updatedVersion = techVersionMapper.toTechVersion(postTechVersionDTO, techId);
-        updatedVersion.setId(currentVersion.getId());
-        updatedVersion.setLastModifiedDate(LocalDateTime.now());
-        if (existingIntervalTree.overlaps(updatedVersion)) {
-            throw new IllegalArgumentException("Bad Request: Новая версия пересекается с существующими.");
-        }
-        techVersionRepository.save(updatedVersion);
     }
 }
