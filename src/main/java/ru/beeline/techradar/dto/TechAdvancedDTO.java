@@ -8,13 +8,13 @@ import java.util.List;
 public class TechAdvancedDTO {
     private Integer id;
     private String label;
-    private String descr;
+    private String description;
     private String link;
     private String createdDate;
     private String deletedDate;
     private String lastModifiedDate;
     private RingDTO ring;
     private RingDTO sector;
-    private List<TechCategoryAdvancedDTO> categories;
+    private List<TechCategoryAdvancedDTO> category;
     private List<TechVersionDTO> versions;
 }

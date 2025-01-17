@@ -16,7 +16,6 @@ public interface TechMapper {
 
     TechSubscribeDTO toTechSubscribeDTO(Tech tech);
 
-    @Mapping(source = "category", target = "categories")
     @Mapping(source = "ring", target = "ring")
     TechAdvancedDTO toTechAdvancedDTO(Tech tech);
 }
