@@ -30,7 +30,8 @@ public class HeaderInterceptor implements HandlerInterceptor {
                     || request.getRequestURI().contains("/api/v1/rings")
                     || request.getRequestURI().contains("/api/v1/sectors")
                     || request.getRequestURI().contains("/api/v1/category")
-                    || (request.getRequestURI().contains("/api/v1/tech") && !request.getRequestURI().contains("/version"))
+                    || (request.getRequestURI().contains("/api/v1/tech")
+                    && !request.getRequestURI().contains("/version")&& !request.getRequestURI().contains("/subscribed"))
             ) {
                 Map<String, Object> headers = new HashMap<>();
                 RequestContext.setHeaders(headers);
