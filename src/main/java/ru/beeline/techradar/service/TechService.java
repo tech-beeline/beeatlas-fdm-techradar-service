@@ -56,7 +56,7 @@ public class TechService {
     }
 
     public List<TechAdvancedDTO> getAllTech(Boolean actualTech) {
-        List<Tech> techs = Boolean.TRUE.equals(actualTech) ? techRepository.findAllByDeletedDateIsNull() : techRepository.findAll();
+        List<Tech> techs = Boolean.FALSE.equals(actualTech) ? techRepository.findAll() : techRepository.findAllByDeletedDateIsNull();
         List<TechAdvancedDTO> result = new ArrayList<>();
         techs.forEach(tech -> {
             List<TechVersionDTO> versionsResult = new ArrayList<>();
