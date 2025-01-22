@@ -1,5 +1,6 @@
 package ru.beeline.techradar.controller;
 
+import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,16 +36,19 @@ public class CategoryController {
     }
 
     @PostMapping
+    @ApiOperation(value = "Post category")
     public Category addCategory(@RequestBody PostCategoryDTO category) {
         return categoryService.addCategory(category);
     }
 
     @PutMapping("/join")
+    @ApiOperation(value = "Put category")
     public ResponseEntity putCategory(@RequestBody PutTechCategoryDTO category) {
         categoryService.putCategory(category);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PatchMapping("/{id}")
+    @ApiOperation(value = "Patch category")
     public ResponseEntity patchCategory(@RequestBody PatchCategoryDTO category,
                                         @PathVariable String id) {
         categoryService.patchCategory(id, category);
@@ -52,6 +56,7 @@ public class CategoryController {
 
     }
     @DeleteMapping("/{id}")
+    @ApiOperation(value = "Delete category")
     public ResponseEntity deleteCategory(@PathVariable String id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -59,12 +64,14 @@ public class CategoryController {
     }
 
     @GetMapping
+    @ApiOperation(value = "get All Categories")
     public List<Category> getAllCategories() {
         return categoryService.getAll();
     }
 
 
     @GetMapping("/tech")
+    @ApiOperation(value = "get Tech By Categories")
     public List<Tech> getTechByCategories(@RequestParam("id_category") List<Integer> idCategory) {
         return techService.getAllTechByCategory(idCategory);
     }
