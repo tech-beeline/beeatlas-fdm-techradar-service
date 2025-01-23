@@ -23,6 +23,10 @@ public class HeaderInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         try {
+            if (request.getRequestURI().contains("/swagger")
+                    || (request.getRequestURI().contains("/v2/api-docs"))) {
+                return true;
+            }
             if (request.getRequestURI().contains("/actuator/prometheus")
                     || request.getRequestURI().contains("/swagger")
                     || request.getRequestURI().contains("/error")

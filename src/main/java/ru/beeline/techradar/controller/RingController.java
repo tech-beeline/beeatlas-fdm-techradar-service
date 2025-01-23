@@ -1,5 +1,6 @@
 package ru.beeline.techradar.controller;
 
+import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ public class RingController {
     }
 
     @GetMapping
+    @ApiOperation(value = "get all Tech")
     public List<Ring> getAllTech() {
         return ringService.getAllRings();
     }
