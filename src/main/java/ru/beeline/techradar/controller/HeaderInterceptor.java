@@ -39,7 +39,12 @@ public class HeaderInterceptor implements HandlerInterceptor {
             ) {
                 Map<String, Object> headers = new HashMap<>();
                 RequestContext.setHeaders(headers);
-                headers.put(USER_ROLES_HEADER, toList(request.getHeader(USER_ROLES_HEADER)));
+                String userRolesHeaderValue = request.getHeader(USER_ROLES_HEADER);
+                if (userRolesHeaderValue == null) {
+                    userRolesHeaderValue = "";
+                }
+                List<String> userRolesList = Arrays.asList(userRolesHeaderValue.split(","));
+                headers.put(USER_ROLES_HEADER, userRolesList);
                 return true;
             }
             Map<String, Object> headers = new HashMap<>();
