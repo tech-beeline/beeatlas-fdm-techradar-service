@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
-import static ru.beeline.techradar.utils.Constant.USER_PERMISSION_HEADER;
 import static ru.beeline.techradar.utils.Constant.USER_ID_HEADER;
+import static ru.beeline.techradar.utils.Constant.USER_PERMISSION_HEADER;
 import static ru.beeline.techradar.utils.Constant.USER_PRODUCTS_IDS_HEADER;
+import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
 
 public class RequestContext {
     private static final ThreadLocal<Map<String, Object>> headersThreadLocal = new ThreadLocal<>();
@@ -26,12 +26,15 @@ public class RequestContext {
         }
         return headers;
     }
+
     public static List<String> getRoles() {
         List<String> roles = (List<String>) getHeaders().get(USER_ROLES_HEADER);
         if (roles == null) {
             return new ArrayList<>();
         }
-        return roles;
+        return roles.stream()
+                .map(role -> role.replaceAll("^[^a-zA-Z]+|[^a-zA-Z]+$", ""))
+                .collect(Collectors.toList());
     }
 
     public static List<String> getUserPermissions() {
