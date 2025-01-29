@@ -218,7 +218,7 @@ public class TechService {
     }
 
     public void deleteTechVersion(Integer techId, Integer versionId) {
-        if (RequestContext.getRoles().contains("ADMINISTRATOR")) {
+        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
         TechVersion techVersion = techVersionRepository.findByTechIdAndIdAndDeletedDateIsNull(techId, versionId);
