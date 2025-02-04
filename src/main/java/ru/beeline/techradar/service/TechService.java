@@ -13,6 +13,8 @@ import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
+import ru.beeline.techradar.maper.HistoryMapper;
+import ru.beeline.techradar.maper.TechHistoryMapper;
 import ru.beeline.techradar.maper.TechMapper;
 import ru.beeline.techradar.maper.TechVersionMapper;
 import ru.beeline.techradar.repository.*;
@@ -39,8 +41,18 @@ public class TechService {
     private final NotificationClient notificationClient;
     private final ProductClient productClient;
     private final TechVersionRepository techVersionRepository;
+    private final HistoryTechRepository historyTechRepository;
+    private final TechHistoryMapper techHistoryMapper;
+    private final HistoryMapper historyMapper;
 
-    public TechService(TechRepository techRepository, TechCategoryRepository techCategoryRepository, TechMapper techMapper, TechVersionMapper techVersionMapper, CategoryRepository categoryRepository, SectorRepository sectorRepository, RingRepository ringRepository, BlackListRepository blackListRepository, TechBlProductRepository techBlProductRepository, NotificationClient notificationClient, ProductClient productClient, TechVersionRepository techVersionRepository) {
+    public TechService(TechRepository techRepository, TechCategoryRepository techCategoryRepository,
+                       TechMapper techMapper, TechVersionMapper techVersionMapper,
+                       CategoryRepository categoryRepository, SectorRepository sectorRepository,
+                       RingRepository ringRepository, BlackListRepository blackListRepository,
+                       TechBlProductRepository techBlProductRepository, NotificationClient notificationClient,
+                       ProductClient productClient, TechVersionRepository techVersionRepository,
+                       HistoryTechRepository historyTechRepository, TechHistoryMapper techHistoryMapper,
+                       HistoryMapper historyMapper) {
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
@@ -53,6 +65,9 @@ public class TechService {
         this.notificationClient = notificationClient;
         this.productClient = productClient;
         this.techVersionRepository = techVersionRepository;
+        this.historyTechRepository = historyTechRepository;
+        this.techHistoryMapper = techHistoryMapper;
+        this.historyMapper = historyMapper;
     }
 
     public List<TechAdvancedDTO> getAllTech(Boolean actualTech) {
@@ -69,6 +84,30 @@ public class TechService {
             result.add(techAdvancedDTO);
 
         });
+        return result;
+    }
+
+    public HistoryTechDTO getTechById(Integer id) {
+        Tech tech = techRepository.findById(id).orElseThrow(() -> new NotFoundException("Запись не найдена"));
+        List<HistoryTech> historyTechList = historyTechRepository.findByRefId(id);
+        Sector sector = sectorRepository.findById(tech.getSector().getId())
+                .orElseThrow(() -> new NotFoundException("Запись в таблице Sector с данным id не найдена"));
+        Ring ring = ringRepository.findById(tech.getRing().getId())
+                .orElseThrow(() -> new NotFoundException("Запись в таблице Ring с данным id не найдена"));
+        List<TechCategoryAdvancedDTO> categoriesResult = tech.getCategory().stream()
+                .map(category -> new TechCategoryAdvancedDTO(category.getId(), category.getName()))
+                .collect(Collectors.toList());
+        HistoryTechDTO result = techHistoryMapper.toHistoryTechDTO(tech, sector, ring, categoriesResult);
+        if (!historyTechList.isEmpty()) {
+            Integer maxVersion = historyTechList.stream()
+                    .map(HistoryTech::getVersion)
+                    .max(Integer::compareTo).orElse(0);
+            List<HistoryDTO> historyDTOList = historyTechList.stream()
+                    .map(historyMapper::toHistoryDTO)
+                    .collect(Collectors.toList());
+            result.setHistory(historyDTOList);
+            result.setCurrentVersion(maxVersion + 1);
+        }
         return result;
     }
 
