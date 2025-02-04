@@ -26,6 +26,12 @@ public class TechController {
         return techService.getAllTech(actualTech);
     }
 
+    @GetMapping("/{id}")
+    @ApiOperation(value = "Получение технологии и истории статусов по id")
+    public ResponseEntity<HistoryTechDTO> getTechById(@PathVariable Integer id) {
+        return ResponseEntity.status(HttpStatus.OK).body(techService.getTechById(id));
+    }
+
     @GetMapping("/subscribed")
     @ApiOperation(value = "get all Subscribed")
     public List<TechSubscribeDTO> getSubscribed() {
