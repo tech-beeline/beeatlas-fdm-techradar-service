@@ -204,6 +204,7 @@ public class TechService {
         }
         Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         tech.setLastModifiedDate(LocalDate.now());
+        saveHistoryTech(tech);
         if (techDTO.getLabel() != null) {
             tech.setLabel(techDTO.getLabel());
         }
@@ -228,6 +229,26 @@ public class TechService {
         if (techDTO.getCategories() != null && !techDTO.getCategories().isEmpty()) {
             saveTechCategoryWithoutDuplicate(savedTech, techDTO.getCategories());
         }
+    }
+
+    private void saveHistoryTech(Tech tech) {
+        List<HistoryTech> historyTechList = historyTechRepository.findByRefId(tech.getId());
+        Integer maxVersion = 0;
+        if (!historyTechList.isEmpty()) {
+            maxVersion = historyTechList.stream()
+                    .map(HistoryTech::getVersion)
+                    .max(Integer::compareTo).get();
+        }
+        historyTechRepository.save(HistoryTech.builder()
+                .refId(tech.getId())
+                .version(maxVersion + 1)
+                .label(tech.getLabel())
+                .description(tech.getDescription())
+                .sectorId(tech.getSector().getId())
+                .ringId(tech.getRing().getId())
+                .link(tech.getLink())
+                .createdDate(tech.getLastModifiedDate().atStartOfDay())
+                .build());
     }
 
     public void deleteTech(Integer id) {
