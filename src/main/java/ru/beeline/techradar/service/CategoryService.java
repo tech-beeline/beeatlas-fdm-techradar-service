@@ -48,7 +48,7 @@ public class CategoryService {
             throw new ForbiddenException("403 Forbidden.");
         }
         Category savedEntity = categoryRepository.findByName(category.getJoinCategoryName())
-                .orElseGet(() -> addCategory(PostCategoryDTO.builder().name(category.getJoinCategoryName()).build()));
+                .orElseGet(() -> categoryRepository.save(Category.builder().name(category.getJoinCategoryName()).build()));
         List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(category.getJoinedCategoriesId());
         Category finalSavedEntity = savedEntity;
         Set<Tech> techSet = techCategories.stream().map(TechCategory::getTech).collect(Collectors.toSet());
@@ -56,6 +56,7 @@ public class CategoryService {
         .build()).collect(Collectors.toList());
         techCategoryRepository.deleteAllInBatch(techCategories);
         techCategoryRepository.saveAll(newTechCategories);
+        category.getJoinedCategoriesId().remove(Integer.valueOf(finalSavedEntity.getId()));
         categoryRepository.deleteAllByIdIn(category.getJoinedCategoriesId());
     }
 
