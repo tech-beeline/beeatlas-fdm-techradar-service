@@ -27,7 +27,6 @@ public class HistoryTechDTO {
     private LocalDate deletedDate;
     private String link;
     private RingDTO ring;
-    @JsonProperty("current_version")
     private Integer currentVersion;
     private List<HistoryDTO> history;
 }
