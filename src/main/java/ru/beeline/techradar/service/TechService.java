@@ -203,8 +203,8 @@ public class TechService {
             }
         }
         Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
-        tech.setLastModifiedDate(LocalDate.now());
         saveHistoryTech(tech);
+        tech.setLastModifiedDate(LocalDate.now());
         if (techDTO.getLabel() != null) {
             tech.setLabel(techDTO.getLabel());
         }
