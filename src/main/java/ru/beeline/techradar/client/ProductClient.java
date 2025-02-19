@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import ru.beeline.techradar.dto.ProductDTO;
 import ru.beeline.techradar.dto.ProductTechRelationDTO;
 import ru.beeline.techradar.exception.NotFoundException;
-
+import ru.beeline.fdmlib.dto.product.GetProductTechDto;
 import java.util.List;
 
 
@@ -59,6 +59,27 @@ public class ProductClient {
             throw new NotFoundException("relation is not Found");
         } catch (Exception e) {
             log.error(e.getMessage());
+        }
+    }
+
+    public List<GetProductTechDto> getTechProducts() {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("SOURCE", "Sparx");
+
+            HttpEntity<ProductTechRelationDTO> entity = new HttpEntity(ProductTechRelationDTO.builder()
+                    .build(), headers);
+
+            ResponseEntity<List<GetProductTechDto>> response = restTemplate.exchange(
+                    productServerUrl + "/api/v1/products/relations/tech",
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<List<GetProductTechDto>>() {
+                    });
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("relation is not Found");
         }
     }
 }

@@ -55,4 +55,7 @@ public class Tech {
     @ManyToOne
     @JoinColumn(name = "ringId")
     private Ring ring;
+
+    @Column(name = "review")
+    private Boolean review;
 }

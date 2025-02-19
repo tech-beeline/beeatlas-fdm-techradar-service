@@ -97,4 +97,11 @@ public class TechController {
         techService.patchTechVersion(postTechVersionDTO, techId, idVersion);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @PatchMapping("/export/{doc_id}")
+    @ApiOperation(value = "")
+    public ResponseEntity patchTechVersion(@PathVariable(name = "doc_id") Integer docId) {
+        techService.export(docId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

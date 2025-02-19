@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.beeline.fdmlib.dto.product.GetProductTechDto;
+import ru.beeline.fdmlib.dto.product.GetProductsDTO;
+import ru.beeline.techradar.client.DocumentClient;
 import ru.beeline.techradar.client.NotificationClient;
 import ru.beeline.techradar.client.ProductClient;
 import ru.beeline.techradar.controller.RequestContext;
@@ -44,15 +47,17 @@ public class TechService {
     private final HistoryTechRepository historyTechRepository;
     private final TechHistoryMapper techHistoryMapper;
     private final HistoryMapper historyMapper;
+    private final ExcelExporterService excelExporterService;
+    private final DocumentClient documentClient;
 
-    public TechService(TechRepository techRepository, TechCategoryRepository techCategoryRepository,
+    public TechService(ExcelExporterService excelExporterService, TechRepository techRepository, TechCategoryRepository techCategoryRepository,
                        TechMapper techMapper, TechVersionMapper techVersionMapper,
                        CategoryRepository categoryRepository, SectorRepository sectorRepository,
                        RingRepository ringRepository, BlackListRepository blackListRepository,
                        TechBlProductRepository techBlProductRepository, NotificationClient notificationClient,
                        ProductClient productClient, TechVersionRepository techVersionRepository,
                        HistoryTechRepository historyTechRepository, TechHistoryMapper techHistoryMapper,
-                       HistoryMapper historyMapper) {
+                       HistoryMapper historyMapper, DocumentClient documentClient) {
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
@@ -68,6 +73,8 @@ public class TechService {
         this.historyTechRepository = historyTechRepository;
         this.techHistoryMapper = techHistoryMapper;
         this.historyMapper = historyMapper;
+        this.excelExporterService = excelExporterService;
+        this.documentClient = documentClient;
     }
 
     public List<TechAdvancedDTO> getAllTech(Boolean actualTech) {
@@ -275,6 +282,28 @@ public class TechService {
                 || techDTO.getSectorId() == null) {
             throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
         }
+    }
+
+    public void export(Integer docId) {
+        List<Tech> techList = techRepository.findAllByReviewIsTrueAndDeletedDateIsNull();
+        List<GetProductTechDto> techProducts = productClient.getTechProducts();
+        Map<Tech, List<GetProductsDTO>> techProductsMap = createTechMap(techList, techProducts);
+
+        documentClient.updateDocument(docId, excelExporterService.createXlsx(techProductsMap));
+
+    }
+
+    private Map<Tech, List<GetProductsDTO>> createTechMap(List<Tech> techList, List<GetProductTechDto> techProducts) {
+        Map<Tech, List<GetProductsDTO>> techMap = new HashMap<>();
+        for (GetProductTechDto techProduct : techProducts) {
+            for (Tech tech : techList) {
+                if (tech.getId().equals(techProduct.getTechId())) {
+                    techMap.putIfAbsent(tech, new ArrayList<>());
+                    techMap.get(tech).addAll(techProduct.getProducts());
+                }
+            }
+        }
+        return techMap;
     }
 
     public void deleteTechVersion(Integer techId, Integer versionId) {
