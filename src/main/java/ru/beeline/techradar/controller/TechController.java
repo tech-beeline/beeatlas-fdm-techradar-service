@@ -101,7 +101,6 @@ public class TechController {
     @PostMapping("/export/{doc_id}")
     @ApiOperation(value = "")
     public ResponseEntity patchTechVersion(@PathVariable(name = "doc_id") Integer docId) {
-        techService.export(docId);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return techService.export(docId);
     }
 }

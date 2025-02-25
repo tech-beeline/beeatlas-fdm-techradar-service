@@ -53,7 +53,7 @@ public class DocumentClient {
             if (response.getStatusCode() == HttpStatus.OK) {
                 return new ResponseEntity<>(response.getBody(), HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+                return new ResponseEntity<>(response.getBody(), HttpStatus.SERVICE_UNAVAILABLE);
             }
         } catch (Exception e) {
             log.error("Error occurred while trying to update document: ", e);

@@ -3,6 +3,7 @@ package ru.beeline.techradar.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.fdmlib.dto.product.GetProductTechDto;
@@ -284,13 +285,11 @@ public class TechService {
         }
     }
 
-    public void export(Integer docId) {
+    public ResponseEntity<String> export(Integer docId) {
         List<Tech> techList = techRepository.findAllByReviewIsTrueAndDeletedDateIsNull();
         List<GetProductTechDto> techProducts = productClient.getTechProducts();
         Map<Tech, List<GetProductsDTO>> techProductsMap = createTechMap(techList, techProducts);
-
-        documentClient.updateDocument(docId, excelExporterService.createXlsx(techProductsMap));
-
+        return documentClient.updateDocument(docId, excelExporterService.createXlsx(techProductsMap));
     }
 
     private Map<Tech, List<GetProductsDTO>> createTechMap(List<Tech> techList, List<GetProductTechDto> techProducts) {
