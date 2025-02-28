@@ -28,7 +28,7 @@ public class DocumentClient {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            headers.set("Content-Disposition", "attachment; filename=" + file.getOriginalFilename());
+            headers.set("Content-Disposition", file.getOriginalFilename());
 
             byte[] fileBytes = file.getBytes();
 
