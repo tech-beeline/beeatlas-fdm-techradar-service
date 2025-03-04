@@ -2,14 +2,19 @@ package ru.beeline.techradar.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
+import ru.beeline.techradar.exception.DocumentServerException;
+import ru.beeline.techradar.exception.NotFoundException;
+
+import java.io.File;
 
 @Slf4j
 @Service
@@ -24,41 +29,34 @@ public class DocumentClient {
         this.restTemplate = restTemplate;
     }
 
-    public ResponseEntity<String> updateDocument(Integer docId, MultipartFile file) {
+    public void updateDocument(Integer docId, File excelFile, String fileName) {
         try {
+            String url = documentServiceUrl + "/api/v1/export/" + docId;
+            FileSystemResource resource = new FileSystemResource(excelFile);
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("file", resource);
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            headers.set("Content-Disposition", file.getOriginalFilename());
-
-            byte[] fileBytes = file.getBytes();
-
-            Resource fileResource = new ByteArrayResource(fileBytes) {
-                @Override
-                public String getFilename() {
-                    return file.getOriginalFilename();
-                }
-            };
-
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", fileResource);
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, fileName);
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-            String url = documentServiceUrl + "/api/v1/export/" + docId;
 
-            ResponseEntity<String> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.PATCH,
-                    requestEntity,
-                    String.class);
-
+            ResponseEntity response = restTemplate.exchange(url, HttpMethod.PATCH, requestEntity, Object.class);
             if (response.getStatusCode() == HttpStatus.OK) {
-                return new ResponseEntity<>(response.getBody(), HttpStatus.CREATED);
+                log.info("File uploaded successfully");
             } else {
-                return new ResponseEntity<>(response.getBody(), HttpStatus.SERVICE_UNAVAILABLE);
+                log.error("Failed to upload file: {}", response.getStatusCode());
             }
-        } catch (Exception e) {
-            log.error("Error occurred while trying to update document: ", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException(e.getMessage());
+        } catch (HttpClientErrorException.BadRequest e) {
+            throw new IllegalArgumentException(e.getMessage());
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new DocumentServerException(e.getMessage());
+        } catch (RestClientException e) {
+            log.error("Error while uploading file: {}", e.getMessage(), e);
+            throw new RuntimeException("Error while uploading file");
         }
     }
 }

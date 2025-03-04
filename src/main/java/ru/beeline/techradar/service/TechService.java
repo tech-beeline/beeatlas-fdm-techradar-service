@@ -3,7 +3,6 @@ package ru.beeline.techradar.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.fdmlib.dto.product.GetProductTechDto;
@@ -24,9 +23,12 @@ import ru.beeline.techradar.maper.TechVersionMapper;
 import ru.beeline.techradar.repository.*;
 import ru.beeline.techradar.tree.IntervalTree;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -285,21 +287,31 @@ public class TechService {
         }
     }
 
-    public ResponseEntity<String> export(Integer docId) {
+    public TechExportDTO export(Integer docId) {
         List<Tech> techList = techRepository.findAllByReviewIsTrueAndDeletedDateIsNull();
         List<GetProductTechDto> techProducts = productClient.getTechProducts();
         Map<Tech, List<GetProductsDTO>> techProductsMap = createTechMap(techList, techProducts);
-        return documentClient.updateDocument(docId, excelExporterService.createXlsx(techProductsMap));
+        String fileName = "export_technology_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
+        File tempFile = excelExporterService.exportTechnologies(techProductsMap, fileName);
+        System.gc();
+        if (tempFile != null) {
+            documentClient.updateDocument(docId, tempFile, fileName);
+            tempFile.delete();
+        }
+        return TechExportDTO.builder().docId(docId).build();
     }
 
     private Map<Tech, List<GetProductsDTO>> createTechMap(List<Tech> techList, List<GetProductTechDto> techProducts) {
+        Map<Integer, Tech> techById = techList.stream()
+                .collect(Collectors.toMap(Tech::getId, Function.identity()));
         Map<Tech, List<GetProductsDTO>> techMap = new HashMap<>();
+        for (Tech tech : techList) {
+            techMap.put(tech, new ArrayList<>());
+        }
         for (GetProductTechDto techProduct : techProducts) {
-            for (Tech tech : techList) {
-                if (tech.getId().equals(techProduct.getTechId())) {
-                    techMap.putIfAbsent(tech, new ArrayList<>());
-                    techMap.get(tech).addAll(techProduct.getProducts());
-                }
+            Tech tech = techById.get(techProduct.getTechId());
+            if (tech != null) {
+                techMap.get(tech).addAll(techProduct.getProducts());
             }
         }
         return techMap;
