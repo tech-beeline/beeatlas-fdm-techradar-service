@@ -8,6 +8,7 @@ import java.util.List;
 public class TechAdvancedDTO {
     private Integer id;
     private String label;
+    private Boolean review;
     private String description;
     private String link;
     private String createdDate;
