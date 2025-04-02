@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface TechRepository extends JpaRepository<Tech, Integer> {
-    Tech findByLabelAndDeletedDateIsNull(String label);
+    Tech findByLabel(String label);
 
     List<Tech> findAllByLabelIn(List<String> labels);
 
