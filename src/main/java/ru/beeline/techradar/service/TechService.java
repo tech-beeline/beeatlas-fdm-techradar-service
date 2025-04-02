@@ -11,6 +11,7 @@ import ru.beeline.techradar.client.DocumentClient;
 import ru.beeline.techradar.client.NotificationClient;
 import ru.beeline.techradar.client.ProductClient;
 import ru.beeline.techradar.controller.RequestContext;
+import ru.beeline.techradar.domain.Process;
 import ru.beeline.techradar.domain.*;
 import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.exception.ConflictException;
@@ -40,6 +41,7 @@ public class TechService {
     private final CategoryRepository categoryRepository;
     private final SectorRepository sectorRepository;
     private final RingRepository ringRepository;
+    private final ProcessRepository processRepository;
     private final BlackListRepository blackListRepository;
     private final TechBlProductRepository techBlProductRepository;
     private final TechMapper techMapper;
@@ -60,7 +62,7 @@ public class TechService {
                        TechBlProductRepository techBlProductRepository, NotificationClient notificationClient,
                        ProductClient productClient, TechVersionRepository techVersionRepository,
                        HistoryTechRepository historyTechRepository, TechHistoryMapper techHistoryMapper,
-                       HistoryMapper historyMapper, DocumentClient documentClient) {
+                       HistoryMapper historyMapper, DocumentClient documentClient, ProcessRepository processRepository) {
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
@@ -78,6 +80,7 @@ public class TechService {
         this.historyMapper = historyMapper;
         this.excelExporterService = excelExporterService;
         this.documentClient = documentClient;
+        this.processRepository = processRepository;
     }
 
     public List<TechAdvancedDTO> getAllTech(Boolean actualTech) {
@@ -137,24 +140,34 @@ public class TechService {
     }
 
     public void createRelations(PostProductTechDTO tech) {
-        Tech techFromDb = techRepository.findByLabelAndDeletedDateIsNull(tech.getProjLang());
-        if (techFromDb == null) {
-            log.info("Tech not found in database for label: {}", tech.getProjLang());
-            BlackList blackList = blackListRepository.findBlackListByLabel(tech.getProjLang());
-            if (blackList == null) {
-                log.info("BlackList entry not found for label: {}. Creating new entry.", tech.getProjLang());
-                blackList = blackListRepository.save(BlackList.builder().label(tech.getProjLang()).review(false).createDate(new Date()).build());
-            }
-            if (!blackList.getReview()) {
-                TechBlProduct techBlProduct = techBlProductRepository.findByCmdbCodeAndTechBlId(tech.getCmdbCode(), blackList.getId());
-                if (techBlProduct == null) {
-                    log.info("Creating new TechBlProduct entry for cmdbCode: {} and techBlId: {}", tech.getCmdbCode(), blackList.getId());
-                    techBlProductRepository.save(TechBlProduct.builder().cmdbCode(tech.getCmdbCode()).techBlId(blackList.getId()).build());
-                }
-            }
+        Tech techFromDb = techRepository.findByLabel(tech.getProjLang());
+        Integer id;
+        if (techFromDb != null) {
+            id = techFromDb.getId();
         } else {
-            productClient.postProduct(tech.getCmdbCode(), techFromDb.getId());
+            Process process = processRepository.findByNameProcess(tech.getProjLang().toLowerCase());
+            if (process != null) {
+                id = process.getTech().getId();
+            } else {
+                log.info("Tech not found in database for label: {}", tech.getProjLang());
+                log.info("BlackList entry not found for label: {}. Creating new entry.", tech.getProjLang());
+                id = createNewTech(tech);
+            }
         }
+        productClient.postProduct(tech.getCmdbCode(), id);
+    }
+
+    private Integer createNewTech(PostProductTechDTO tech) {
+        Tech newTech = Tech.builder()
+                .label(tech.getProjLang())
+                .description("")
+                .sector(sectorRepository.findById(0).orElseThrow(() -> new IllegalStateException("Default sector not found")))
+                .createdDate(LocalDate.now())
+                .lastModifiedDate(LocalDate.now())
+                .ring(ringRepository.findById(0).orElseThrow(() -> new IllegalStateException("Default ring not found")))
+                .review(false)
+                .build();
+        return techRepository.save(newTech).getId();
     }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
