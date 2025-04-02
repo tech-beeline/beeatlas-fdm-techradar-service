@@ -132,9 +132,16 @@ public class TechService {
     public List<ProductDTO> getProductTech() {
         List<ProductDTO> result = productClient.getProduct();
         result.forEach(productDTO -> {
-            productDTO.getTech().forEach(techDTO -> {
-                techDTO.setLabel(techRepository.findById(techDTO.getId()).get().getLabel());
-            });
+            Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
+            while (iterator.hasNext()) {
+                ProductTechDTO techDTO = iterator.next();
+                Optional<Tech> optionalTech = techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techDTO.getId());
+                if (optionalTech.isPresent()) {
+                    techDTO.setLabel(optionalTech.get().getLabel());
+                } else {
+                    iterator.remove();
+                }
+            }
         });
         return result;
     }
