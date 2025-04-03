@@ -257,6 +257,9 @@ public class TechService {
         if (techDTO.getLink() != null) {
             tech.setLink(techDTO.getLink());
         }
+        if (techDTO.getReview() !=null){
+            tech.setReview(techDTO.getReview());
+        }
         tech.setDeletedDate(null);
         Tech savedTech = techRepository.save(tech);
         techCategoryRepository.deleteAllByTech(savedTech);
