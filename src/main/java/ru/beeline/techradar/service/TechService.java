@@ -292,6 +292,7 @@ public class TechService {
         }
         Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         tech.setDeletedDate(LocalDate.now());
+        tech.setReview(true);
         techRepository.save(tech);
     }
 
