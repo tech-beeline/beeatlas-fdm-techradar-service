@@ -12,6 +12,7 @@ public interface TechMapper {
 
     @Mapping(target = "category", ignore = true)
     @Mapping(source = "descr", target = "description")
+    @Mapping(source = "review", target = "review")
     Tech toTech(PostTechDTO techDTO);
 
     TechSubscribeDTO toTechSubscribeDTO(Tech tech);
