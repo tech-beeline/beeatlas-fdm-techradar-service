@@ -204,6 +204,9 @@ public class TechService {
         }
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
+            if (techForSave.getReview() == null) {
+                techForSave.setReview(false);
+            }
             Ring ring = ringRepository.findById(techDTOtoSave.getRingId()).orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
             techForSave.setRing(ring);
             Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId()).orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
@@ -257,7 +260,7 @@ public class TechService {
         if (techDTO.getLink() != null) {
             tech.setLink(techDTO.getLink());
         }
-        if (techDTO.getReview() !=null){
+        if (techDTO.getReview() != null) {
             tech.setReview(techDTO.getReview());
         }
         tech.setDeletedDate(null);

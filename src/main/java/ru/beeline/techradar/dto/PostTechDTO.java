@@ -22,4 +22,6 @@ public class PostTechDTO {
 
     @JsonProperty("ring_id")
     private Integer ringId;
+
+    private Boolean review;
 }
