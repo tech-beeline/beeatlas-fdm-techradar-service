@@ -199,17 +199,21 @@ public class TechService {
         List<Tech> existTechList = techRepository.findAllByLabelIn(labels);
         if (!existTechList.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writeValueAsString(existTechList.stream().map(tech -> Collections.singletonMap("label", tech.getLabel())).collect(Collectors.toList()));
+            String json = mapper.writeValueAsString(existTechList.stream().map(tech -> Collections.singletonMap("label",
+                    tech.getLabel())).collect(Collectors.toList()));
             throw new ConflictException(json);
         }
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
             if (techForSave.getReview() == null) {
+                log.info("tech: " + techDTOtoSave.getLabel() + ", Review - false");
                 techForSave.setReview(false);
             }
-            Ring ring = ringRepository.findById(techDTOtoSave.getRingId()).orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
+            Ring ring = ringRepository.findById(techDTOtoSave.getRingId()).orElseThrow(() ->
+                    new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
             techForSave.setRing(ring);
-            Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId()).orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
+            Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId()).orElseThrow(() ->
+                    new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
             techForSave.setSector(sector);
             techForSave.setCreatedDate(LocalDate.now());
             techForSave.setLastModifiedDate(LocalDate.now());
@@ -217,6 +221,7 @@ public class TechService {
             if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
             }
+            log.info("tech save: " + techDTOtoSave.getLabel() + "tech review: " + savedTech.getReview());
         });
     }
 
