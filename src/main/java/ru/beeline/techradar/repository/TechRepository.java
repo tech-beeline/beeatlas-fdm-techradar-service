@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface TechRepository extends JpaRepository<Tech, Integer> {
-    Tech findByLabel(String label);
+    Tech findByLabelIgnoreCase(String label);
 
     List<Tech> findAllByLabelIn(List<String> labels);
 

@@ -7,5 +7,5 @@ import ru.beeline.techradar.domain.Process;
 @Repository
 public interface ProcessRepository extends JpaRepository<Process, Integer> {
 
-    Process findByNameProcess(String projLang);
+    Process findByNameProcessIgnoreCase(String projLang);
 }

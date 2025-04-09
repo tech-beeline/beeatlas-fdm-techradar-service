@@ -147,12 +147,12 @@ public class TechService {
     }
 
     public void createRelations(PostProductTechDTO tech) {
-        Tech techFromDb = techRepository.findByLabel(tech.getProjLang());
+        Tech techFromDb = techRepository.findByLabelIgnoreCase(tech.getProjLang());
         Integer id;
         if (techFromDb != null) {
             id = techFromDb.getId();
         } else {
-            Process process = processRepository.findByNameProcess(tech.getProjLang().toLowerCase());
+            Process process = processRepository.findByNameProcessIgnoreCase(tech.getProjLang());
             if (process != null) {
                 id = process.getTech().getId();
             } else {
