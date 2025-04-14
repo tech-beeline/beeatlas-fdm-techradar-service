@@ -25,7 +25,6 @@ import ru.beeline.techradar.repository.*;
 import ru.beeline.techradar.tree.IntervalTree;
 
 import java.io.File;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -169,8 +168,8 @@ public class TechService {
                 .label(tech.getProjLang())
                 .description("")
                 .sector(sectorRepository.findById(0).orElseThrow(() -> new IllegalStateException("Default sector not found")))
-                .createdDate(LocalDate.now())
-                .lastModifiedDate(LocalDate.now())
+                .createdDate(LocalDateTime.now())
+                .lastModifiedDate(LocalDateTime.now())
                 .ring(ringRepository.findById(0).orElseThrow(() -> new IllegalStateException("Default ring not found")))
                 .review(false)
                 .build();
@@ -215,8 +214,8 @@ public class TechService {
             Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId()).orElseThrow(() ->
                     new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
             techForSave.setSector(sector);
-            techForSave.setCreatedDate(LocalDate.now());
-            techForSave.setLastModifiedDate(LocalDate.now());
+            techForSave.setCreatedDate(LocalDateTime.now());
+            techForSave.setLastModifiedDate(LocalDateTime.now());
             Tech savedTech = techRepository.save(techForSave);
             if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
@@ -247,7 +246,7 @@ public class TechService {
         }
         Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         saveHistoryTech(tech);
-        tech.setLastModifiedDate(LocalDate.now());
+        tech.setLastModifiedDate(LocalDateTime.now());
         if (techDTO.getLabel() != null) {
             tech.setLabel(techDTO.getLabel());
         }
@@ -293,7 +292,7 @@ public class TechService {
                 .sectorId(tech.getSector().getId())
                 .ringId(tech.getRing().getId())
                 .link(tech.getLink())
-                .createdDate(tech.getLastModifiedDate().atStartOfDay())
+                .createdDate(tech.getLastModifiedDate())
                 .build());
     }
 
@@ -302,7 +301,7 @@ public class TechService {
             throw new ForbiddenException("403 Forbidden.");
         }
         Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
-        tech.setDeletedDate(LocalDate.now());
+        tech.setDeletedDate(LocalDateTime.now());
         tech.setReview(true);
         techRepository.save(tech);
     }

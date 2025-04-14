@@ -1,10 +1,9 @@
 package ru.beeline.techradar.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -20,11 +19,11 @@ public class HistoryTechDTO {
     private RingDTO sector;
     private List<TechCategoryAdvancedDTO> category;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate createdDate;
+    private LocalDateTime createdDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate lastModifiedDate;
+    private LocalDateTime lastModifiedDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate deletedDate;
+    private LocalDateTime deletedDate;
     private String link;
     private RingDTO ring;
     private Integer currentVersion;
