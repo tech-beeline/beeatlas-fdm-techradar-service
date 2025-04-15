@@ -215,7 +215,6 @@ public class TechService {
                     new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
             techForSave.setSector(sector);
             techForSave.setCreatedDate(LocalDateTime.now());
-            techForSave.setLastModifiedDate(LocalDateTime.now());
             Tech savedTech = techRepository.save(techForSave);
             if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
