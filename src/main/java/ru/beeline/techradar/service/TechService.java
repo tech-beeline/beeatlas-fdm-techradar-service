@@ -291,7 +291,8 @@ public class TechService {
                 .sectorId(tech.getSector().getId())
                 .ringId(tech.getRing().getId())
                 .link(tech.getLink())
-                .createdDate(tech.getLastModifiedDate())
+                .createdDate(tech.getLastModifiedDate() == null ?
+                        tech.getCreatedDate() : tech.getLastModifiedDate())
                 .build());
     }
 
