@@ -2,8 +2,10 @@ package ru.beeline.techradar.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Builder
@@ -58,4 +60,8 @@ public class Tech {
 
     @Column(name = "review")
     private Boolean review;
+
+    @OneToMany(mappedBy = "tech")
+    private List<PatternTech> children = new ArrayList<>();
+    ;
 }

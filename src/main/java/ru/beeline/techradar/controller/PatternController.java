@@ -1,0 +1,28 @@
+package ru.beeline.techradar.controller;
+
+import io.swagger.annotations.ApiOperation;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ru.beeline.techradar.dto.PostPatternDTO;
+import ru.beeline.techradar.service.PatternService;
+
+import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
+
+@RestController
+@RequestMapping("/api/v1/pattern")
+public class PatternController {
+
+    private final PatternService patternService;
+
+    public PatternController(PatternService patternService) {
+        this.patternService = patternService;
+    }
+
+    @PostMapping
+    @ApiOperation(value = "Создания паттернов проектирования")
+    public ResponseEntity createPattern(@RequestBody PostPatternDTO patternDTO,
+                                          @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
+    }
+}

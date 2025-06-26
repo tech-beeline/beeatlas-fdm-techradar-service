@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import ru.beeline.techradar.exception.ConflictException;
 import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
+import ru.beeline.techradar.exception.ValidationException;
 
 @ControllerAdvice
 @Slf4j
@@ -48,5 +49,14 @@ public class CustomExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
                 .body(e.getMessage());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Object> handleException(ValidationException e) {
+        log.error(e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .header("content-type", MediaType.APPLICATION_JSON_VALUE)
+                .body("409 Ошибка валидации тела запроса : " + e.getMessage());
     }
 }

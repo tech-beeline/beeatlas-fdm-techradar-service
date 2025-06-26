@@ -6,6 +6,7 @@ import ru.beeline.techradar.domain.Tech;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface TechRepository extends JpaRepository<Tech, Integer> {
@@ -19,6 +20,7 @@ public interface TechRepository extends JpaRepository<Tech, Integer> {
 
     List<Tech> findAllByReviewIsTrueAndDeletedDateIsNull();
 
-    Optional <Tech> findByIdAndDeletedDateIsNullAndReviewIsTrue(Integer id);
+    Optional<Tech> findByIdAndDeletedDateIsNullAndReviewIsTrue(Integer id);
 
+    List<Tech> findByIdInAndDeletedDateIsNullAndReviewIsTrue(Set<Integer> ids);
 }
