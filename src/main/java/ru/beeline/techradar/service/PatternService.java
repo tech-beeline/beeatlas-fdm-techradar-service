@@ -9,6 +9,7 @@ import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.IdDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
 import ru.beeline.techradar.exception.ForbiddenException;
+import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.exception.ValidationException;
 import ru.beeline.techradar.repository.PatternRepository;
 import ru.beeline.techradar.repository.PatternTechRepository;
@@ -40,9 +41,7 @@ public class PatternService {
 
     public IdDTO createPattern(PostPatternDTO patternDTO, String userRoles) {
         validatePostPatternDTO(patternDTO);
-        if (userRoles != null && !userRoles.contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
+        validateAdminRole(userRoles);
         Pattern pattern = createPattern(patternDTO);
         if (!patternDTO.getRelationsTech().isEmpty()) {
             Set<Integer> techIds = new HashSet<>(patternDTO.getRelationsTech());
@@ -82,6 +81,21 @@ public class PatternService {
         }
         if (!errMsg.toString().isEmpty()) {
             throw new ValidationException(errMsg.toString());
+        }
+    }
+
+    private void validateAdminRole(String userRoles) {
+        if (userRoles != null && !userRoles.contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+    }
+
+    public void deletePattern(Integer id, String userRoles) {
+        validateAdminRole(userRoles);
+        Pattern pattern = patternRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found: Pattern с данным id не найден."));
+        if (pattern.getDeleteDate() == null) {
+            pattern.setDeleteDate(LocalDateTime.now());
+            patternRepository.save(pattern);
         }
     }
 }

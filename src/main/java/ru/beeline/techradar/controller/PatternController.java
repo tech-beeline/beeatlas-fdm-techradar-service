@@ -25,4 +25,12 @@ public class PatternController {
                                           @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
     }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation(value = "Удаление паттерна проектирования")
+    public ResponseEntity deletePattern(@PathVariable Integer id,
+                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        patternService.deletePattern(id, userRoles);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
