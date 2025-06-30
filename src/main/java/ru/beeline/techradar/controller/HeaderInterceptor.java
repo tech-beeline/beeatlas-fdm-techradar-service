@@ -22,12 +22,14 @@ public class HeaderInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        boolean getAllPattern =  request.getRequestURI().contains("/api/v1/pattern") && ("GET".equalsIgnoreCase(request.getMethod()));
         try {
             if (request.getRequestURI().contains("/swagger")
                     || (request.getRequestURI().contains("/v2/api-docs"))) {
                 return true;
             }
             if (request.getRequestURI().contains("/actuator/prometheus")
+                    || getAllPattern
                     || request.getRequestURI().contains("/swagger")
                     || request.getRequestURI().contains("/error")
                     || request.getRequestURI().contains("/api-docs")

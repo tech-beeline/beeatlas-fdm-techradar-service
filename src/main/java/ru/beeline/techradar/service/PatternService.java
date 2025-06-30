@@ -7,18 +7,19 @@ import ru.beeline.techradar.domain.Pattern;
 import ru.beeline.techradar.domain.PatternTech;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.IdDTO;
+import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
 import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.exception.ValidationException;
+import ru.beeline.techradar.maper.PatternMapper;
 import ru.beeline.techradar.repository.PatternRepository;
 import ru.beeline.techradar.repository.PatternTechRepository;
 import ru.beeline.techradar.repository.TechRepository;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -27,13 +28,16 @@ import java.util.stream.Collectors;
 @Transactional
 public class PatternService {
 
+    private final PatternMapper patternMapper;
     private final TechRepository techRepository;
 
     private final PatternRepository patternRepository;
 
     private final PatternTechRepository patternTechRepository;
 
-    public PatternService(TechRepository techRepository, PatternRepository patternRepository, PatternTechRepository patternTechRepository) {
+    public PatternService(PatternMapper patternMapper, TechRepository techRepository, PatternRepository patternRepository,
+                          PatternTechRepository patternTechRepository) {
+        this.patternMapper = patternMapper;
         this.techRepository = techRepository;
         this.patternRepository = patternRepository;
         this.patternTechRepository = patternTechRepository;
@@ -97,5 +101,34 @@ public class PatternService {
             pattern.setDeleteDate(LocalDateTime.now());
             patternRepository.save(pattern);
         }
+    }
+
+    public List<PatternDTO> getAllPatterns() {
+        List<Pattern> patterns = patternRepository.findAllByDeleteDateIsNull();
+        Map<Integer, List<Integer>> patternIdToTechIds = new HashMap<>();
+        for (Pattern pattern : patterns) {
+            Integer patternId = pattern.getId();
+            List<Integer> techIds = pattern.getChildren().stream()
+                    .map(pt -> pt.getTech().getId())
+                    .collect(Collectors.toList());
+            patternIdToTechIds.put(patternId, techIds);
+        }
+        Set<Integer> allTechIds = patternIdToTechIds.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(allTechIds);
+        Map<Integer, Tech> techMap = techList.stream()
+                .collect(Collectors.toMap(Tech::getId, Function.identity()));
+        List<PatternDTO> result = new ArrayList<>();
+        for (Pattern pattern : patterns) {
+            List<Integer> techIds = patternIdToTechIds.getOrDefault(pattern.getId(), Collections.emptyList());
+            List<Tech> techs = techIds.stream()
+                    .map(techMap::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            result.add(patternMapper.convert(pattern, techs));
+        }
+        result.sort(Comparator.comparingInt(PatternDTO::getId));
+        return result;
     }
 }

@@ -4,8 +4,11 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
 import ru.beeline.techradar.service.PatternService;
+
+import java.util.List;
 
 import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
 
@@ -22,7 +25,7 @@ public class PatternController {
     @PostMapping
     @ApiOperation(value = "Создания паттернов проектирования")
     public ResponseEntity createPattern(@RequestBody PostPatternDTO patternDTO,
-                                          @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
     }
 
@@ -32,5 +35,11 @@ public class PatternController {
                                         @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         patternService.deletePattern(id, userRoles);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @GetMapping
+    @ApiOperation(value = "Просмотр всех паттернов проектирования")
+    public ResponseEntity<List<PatternDTO>> allPatterns() {
+        return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatterns());
     }
 }
