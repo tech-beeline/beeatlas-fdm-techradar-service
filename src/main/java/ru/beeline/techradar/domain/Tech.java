@@ -63,5 +63,4 @@ public class Tech {
 
     @OneToMany(mappedBy = "tech")
     private List<PatternTech> children = new ArrayList<>();
-    ;
 }
