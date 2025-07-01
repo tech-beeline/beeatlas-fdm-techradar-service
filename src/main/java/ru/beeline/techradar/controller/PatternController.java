@@ -13,7 +13,7 @@ import java.util.List;
 import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
 
 @RestController
-@RequestMapping("/api/v1/pattern")
+@RequestMapping("/api/v1")
 public class PatternController {
 
     private final PatternService patternService;
@@ -22,14 +22,14 @@ public class PatternController {
         this.patternService = patternService;
     }
 
-    @PostMapping
+    @PostMapping("/pattern")
     @ApiOperation(value = "Создания паттернов проектирования")
     public ResponseEntity createPattern(@RequestBody PostPatternDTO patternDTO,
                                         @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/pattern/{id}")
     @ApiOperation(value = "Удаление паттерна проектирования")
     public ResponseEntity deletePattern(@PathVariable Integer id,
                                         @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
@@ -37,19 +37,19 @@ public class PatternController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping
+    @GetMapping("/patterns")
     @ApiOperation(value = "Просмотр всех паттернов проектирования")
     public ResponseEntity<List<PatternDTO>> allPatterns() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatterns());
     }
 
-    @GetMapping("/tech/{tech_id}")
+    @GetMapping("/pattern/tech/{tech_id}")
     @ApiOperation(value = "Просмотр всех паттернов связанных с технологией")
     public ResponseEntity<List<PatternDTO>> getAllTechnologyPatterns(@PathVariable(name = "tech_id") Integer techId) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllTechnologyPatterns(techId));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/pattern/{id}")
     @ApiOperation(value = "Просмотр паттерна по id ")
     public ResponseEntity<PatternDTO> getPatternId(@PathVariable(name = "id") Integer id) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternId(id));
