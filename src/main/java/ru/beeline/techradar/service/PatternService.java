@@ -105,30 +105,42 @@ public class PatternService {
 
     public List<PatternDTO> getAllPatterns() {
         List<Pattern> patterns = patternRepository.findAllByDeleteDateIsNull();
-        Map<Integer, List<Integer>> patternIdToTechIds = new HashMap<>();
-        for (Pattern pattern : patterns) {
-            Integer patternId = pattern.getId();
-            List<Integer> techIds = pattern.getChildren().stream()
-                    .map(pt -> pt.getTech().getId())
-                    .collect(Collectors.toList());
-            patternIdToTechIds.put(patternId, techIds);
-        }
-        Set<Integer> allTechIds = patternIdToTechIds.values().stream()
-                .flatMap(Collection::stream)
+        return mapPatternsToDTOs(patterns);
+    }
+
+    private List<PatternDTO> mapPatternsToDTOs(List<Pattern> patterns) {
+        Set<Integer> allTechIds = patterns.stream()
+                .flatMap(pattern -> pattern.getChildren().stream())
+                .map(PatternTech::getTech)
+                .filter(Objects::nonNull)
+                .map(Tech::getId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(allTechIds);
         Map<Integer, Tech> techMap = techList.stream()
                 .collect(Collectors.toMap(Tech::getId, Function.identity()));
         List<PatternDTO> result = new ArrayList<>();
         for (Pattern pattern : patterns) {
-            List<Integer> techIds = patternIdToTechIds.getOrDefault(pattern.getId(), Collections.emptyList());
-            List<Tech> techs = techIds.stream()
-                    .map(techMap::get)
+            List<Tech> techs = pattern.getChildren().stream()
+                    .map(PatternTech::getTech)
+                    .filter(Objects::nonNull)
+                    .map(tech -> techMap.get(tech.getId()))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            result.add(patternMapper.convert(pattern, techs));
+            PatternDTO dto = patternMapper.convert(pattern, techs);
+            result.add(dto);
         }
-        result.sort(Comparator.comparingInt(PatternDTO::getId));
+        if (!result.isEmpty()) {
+            result.sort(Comparator.comparingInt(PatternDTO::getId));
+        }
         return result;
+    }
+
+    public List<PatternDTO> getAllTechnologyPatterns(Integer techId) {
+        techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techId).orElseThrow(() ->
+                new NotFoundException("Указана несуществующая технология"));
+        List<Pattern> patterns = patternTechRepository.findAllByTechIdAndPatternDeleteDateIsNull(techId)
+                .stream().map(PatternTech::getPattern).collect(Collectors.toList());
+        return mapPatternsToDTOs(patterns);
     }
 }
