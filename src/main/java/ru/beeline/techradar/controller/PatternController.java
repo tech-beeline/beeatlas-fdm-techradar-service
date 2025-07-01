@@ -43,7 +43,7 @@ public class PatternController {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatterns());
     }
 
-    @GetMapping("/pattern/tech/{tech_id}")
+    @GetMapping("/patterns/tech/{tech_id}")
     @ApiOperation(value = "Просмотр всех паттернов связанных с технологией")
     public ResponseEntity<List<PatternDTO>> getAllTechnologyPatterns(@PathVariable(name = "tech_id") Integer techId) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllTechnologyPatterns(techId));
