@@ -45,7 +45,13 @@ public class PatternController {
 
     @GetMapping("/tech/{tech_id}")
     @ApiOperation(value = "Просмотр всех паттернов связанных с технологией")
-    public ResponseEntity<List<PatternDTO>> getAllTechnologyPatterns(@PathVariable (name = "tech_id") Integer  techId ) {
+    public ResponseEntity<List<PatternDTO>> getAllTechnologyPatterns(@PathVariable(name = "tech_id") Integer techId) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllTechnologyPatterns(techId));
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation(value = "Просмотр паттерна по id ")
+    public ResponseEntity<PatternDTO> getPatternId(@PathVariable(name = "id") Integer id) {
+        return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternId(id));
     }
 }

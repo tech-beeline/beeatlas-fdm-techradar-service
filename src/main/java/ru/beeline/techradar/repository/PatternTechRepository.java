@@ -2,6 +2,7 @@ package ru.beeline.techradar.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import ru.beeline.techradar.domain.Pattern;
 import ru.beeline.techradar.domain.PatternTech;
 
 import java.util.List;
@@ -10,4 +11,6 @@ import java.util.List;
 public interface PatternTechRepository extends JpaRepository<PatternTech, Integer> {
 
     List<PatternTech> findAllByTechIdAndPatternDeleteDateIsNull(Integer techId);
+
+    List<PatternTech> findAllByPatternAndTech_DeletedDateIsNullAndTech_ReviewIsTrue(Pattern pattern);
 }
