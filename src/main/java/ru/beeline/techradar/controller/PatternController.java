@@ -42,4 +42,10 @@ public class PatternController {
     public ResponseEntity<List<PatternDTO>> allPatterns() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatterns());
     }
+
+    @GetMapping("/tech/{tech_id}")
+    @ApiOperation(value = "Просмотр всех паттернов связанных с технологией")
+    public ResponseEntity<List<PatternDTO>> getAllTechnologyPatterns(@PathVariable (name = "tech_id") Integer  techId ) {
+        return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllTechnologyPatterns(techId));
+    }
 }
