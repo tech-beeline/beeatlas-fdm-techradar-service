@@ -47,7 +47,7 @@ public class PatternService {
         validatePostPatternDTO(patternDTO);
         validateAdminRole(userRoles);
         Pattern pattern = createPattern(patternDTO);
-        if (!patternDTO.getRelationsTech().isEmpty()) {
+        if (patternDTO.getRelationsTech() != null && !patternDTO.getRelationsTech().isEmpty()) {
             Set<Integer> techIds = new HashSet<>(patternDTO.getRelationsTech());
             List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(techIds);
             if (techIds.size() != techList.size()) {
@@ -69,7 +69,7 @@ public class PatternService {
                 .code("")
                 .name(patternDTO.getName())
                 .rule(patternDTO.getRule())
-                .isAntiPattern(patternDTO.getIsAntiPattern())
+                .isAntiPattern(patternDTO.getIsAntiPattern() != null && patternDTO.getIsAntiPattern())
                 .createDate(LocalDateTime.now())
                 .build();
         Pattern saved = patternRepository.saveAndFlush(pattern);
@@ -142,5 +142,12 @@ public class PatternService {
         List<Pattern> patterns = patternTechRepository.findAllByTechIdAndPatternDeleteDateIsNull(techId)
                 .stream().map(PatternTech::getPattern).collect(Collectors.toList());
         return mapPatternsToDTOs(patterns);
+    }
+
+    public PatternDTO getPatternId(Integer id) {
+        Pattern pattern = patternRepository.findById(id).orElseThrow(() -> new NotFoundException("Паттерн с данным id не найден"));
+        List<Tech> techList = patternTechRepository.findAllByPatternAndTech_DeletedDateIsNullAndTech_ReviewIsTrue(pattern)
+                .stream().map(PatternTech::getTech).collect(Collectors.toList());
+        return patternMapper.convert(pattern, techList);
     }
 }
