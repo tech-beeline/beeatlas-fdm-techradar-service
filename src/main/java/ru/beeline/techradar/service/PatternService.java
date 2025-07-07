@@ -150,4 +150,8 @@ public class PatternService {
                 .stream().map(PatternTech::getTech).collect(Collectors.toList());
         return patternMapper.convert(pattern, techList);
     }
+
+    public List<PatternDTO> getPatternsAutoCheck() {
+        return mapPatternsToDTOs(patternRepository.findAllByDeleteDateIsNullAndRuleNotNull());
+    }
 }

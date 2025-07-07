@@ -54,4 +54,10 @@ public class PatternController {
     public ResponseEntity<PatternDTO> getPatternId(@PathVariable(name = "id") Integer id) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternId(id));
     }
+
+    @GetMapping("/patterns/auto-check")
+    @ApiOperation(value = "Просмотр паттернов принятых в компании, для которых есть правило автоматической проверки")
+    public ResponseEntity<List<PatternDTO>> getPatternsAutoCheck() {
+        return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternsAutoCheck());
+    }
 }

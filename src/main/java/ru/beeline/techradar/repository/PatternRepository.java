@@ -10,4 +10,6 @@ import java.util.List;
 public interface PatternRepository extends JpaRepository<Pattern, Integer> {
 
     List<Pattern> findAllByDeleteDateIsNull();
+
+    List<Pattern> findAllByDeleteDateIsNullAndRuleNotNull();
 }
