@@ -143,7 +143,9 @@ public class TechService {
     }
 
     public List<ProductDTO> getProductTech() {
+        log.info("start getProductTech");
         List<ProductDTO> result = productClient.getProduct();
+        log.info("Product size is" + result.size());
         if (result.size() < 50) {
             result.forEach(productDTO -> {
                 Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
@@ -162,7 +164,9 @@ public class TechService {
                     .flatMap(productDTO -> productDTO.getTech().stream())
                     .map(ProductTechDTO::getId)
                     .collect(Collectors.toSet());
+            log.info("get teches");
             List<Tech> teches = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(ids);
+            log.info("teches received");
             Map<Integer, String> techMap = teches.stream().collect(Collectors.toMap(Tech::getId, Tech::getLabel));
             result.forEach(productDTO -> {
                 Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
@@ -177,7 +181,7 @@ public class TechService {
                 }
             });
         }
-        return result;
+        return result.stream().distinct().collect(Collectors.toList());
     }
 
     public void createRelations(PostProductTechDTO tech) {
