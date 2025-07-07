@@ -54,14 +54,24 @@ public class TechService {
     private final ExcelExporterService excelExporterService;
     private final DocumentClient documentClient;
 
-    public TechService(ExcelExporterService excelExporterService, TechRepository techRepository, TechCategoryRepository techCategoryRepository,
-                       TechMapper techMapper, TechVersionMapper techVersionMapper,
-                       CategoryRepository categoryRepository, SectorRepository sectorRepository,
-                       RingRepository ringRepository, BlackListRepository blackListRepository,
-                       TechBlProductRepository techBlProductRepository, NotificationClient notificationClient,
-                       ProductClient productClient, TechVersionRepository techVersionRepository,
-                       HistoryTechRepository historyTechRepository, TechHistoryMapper techHistoryMapper,
-                       HistoryMapper historyMapper, DocumentClient documentClient, ProcessRepository processRepository) {
+    public TechService(ExcelExporterService excelExporterService,
+                       TechRepository techRepository,
+                       TechCategoryRepository techCategoryRepository,
+                       TechMapper techMapper,
+                       TechVersionMapper techVersionMapper,
+                       CategoryRepository categoryRepository,
+                       SectorRepository sectorRepository,
+                       RingRepository ringRepository,
+                       BlackListRepository blackListRepository,
+                       TechBlProductRepository techBlProductRepository,
+                       NotificationClient notificationClient,
+                       ProductClient productClient,
+                       TechVersionRepository techVersionRepository,
+                       HistoryTechRepository historyTechRepository,
+                       TechHistoryMapper techHistoryMapper,
+                       HistoryMapper historyMapper,
+                       DocumentClient documentClient,
+                       ProcessRepository processRepository) {
         this.techRepository = techRepository;
         this.techCategoryRepository = techCategoryRepository;
         this.techMapper = techMapper;
@@ -94,7 +104,9 @@ public class TechService {
             List<TechVersionDTO> versionsResult = new ArrayList<>();
             List<TechVersion> techVersions = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(tech.getId());
             techVersions.forEach(techVersion -> {
-                versionsResult.add(techVersionMapper.toTechVersionDTO(techVersion, ringRepository.findById(techVersion.getStatusId()).get()));
+                versionsResult.add(techVersionMapper.toTechVersionDTO(techVersion,
+                                                                      ringRepository.findById(techVersion.getStatusId())
+                                                                              .get()));
             });
             TechAdvancedDTO techAdvancedDTO = techMapper.toTechAdvancedDTO(tech);
             techAdvancedDTO.setVersions(versionsResult);
@@ -111,14 +123,16 @@ public class TechService {
                 .orElseThrow(() -> new NotFoundException("Запись в таблице Sector с данным id не найдена"));
         Ring ring = ringRepository.findById(tech.getRing().getId())
                 .orElseThrow(() -> new NotFoundException("Запись в таблице Ring с данным id не найдена"));
-        List<TechCategoryAdvancedDTO> categoriesResult = tech.getCategory().stream()
+        List<TechCategoryAdvancedDTO> categoriesResult = tech.getCategory()
+                .stream()
                 .map(category -> new TechCategoryAdvancedDTO(category.getId(), category.getName()))
                 .collect(Collectors.toList());
         HistoryTechDTO result = techHistoryMapper.toHistoryTechDTO(tech, sector, ring, categoriesResult);
         if (!historyTechList.isEmpty()) {
             Integer maxVersion = historyTechList.stream()
                     .map(HistoryTech::getVersion)
-                    .max(Integer::compareTo).orElse(0);
+                    .max(Integer::compareTo)
+                    .orElse(0);
             List<HistoryDTO> historyDTOList = historyTechList.stream()
                     .map(historyMapper::toHistoryDTO)
                     .collect(Collectors.toList());
@@ -130,18 +144,39 @@ public class TechService {
 
     public List<ProductDTO> getProductTech() {
         List<ProductDTO> result = productClient.getProduct();
-        result.forEach(productDTO -> {
-            Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
-            while (iterator.hasNext()) {
-                ProductTechDTO techDTO = iterator.next();
-                Optional<Tech> optionalTech = techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techDTO.getId());
-                if (optionalTech.isPresent()) {
-                    techDTO.setLabel(optionalTech.get().getLabel());
-                } else {
-                    iterator.remove();
+        if (result.size() < 50) {
+            result.forEach(productDTO -> {
+                Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
+                while (iterator.hasNext()) {
+                    ProductTechDTO techDTO = iterator.next();
+                    Optional<Tech> optionalTech = techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techDTO.getId());
+                    if (optionalTech.isPresent()) {
+                        techDTO.setLabel(optionalTech.get().getLabel());
+                    } else {
+                        iterator.remove();
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            Set<Integer> ids = result.stream()
+                    .flatMap(productDTO -> productDTO.getTech().stream())
+                    .map(ProductTechDTO::getId)
+                    .collect(Collectors.toSet());
+            List<Tech> teches = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(ids);
+            Map<Integer, String> techMap = teches.stream().collect(Collectors.toMap(Tech::getId, Tech::getLabel));
+            result.forEach(productDTO -> {
+                Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
+                while (iterator.hasNext()) {
+                    ProductTechDTO techDTO = iterator.next();
+                    Optional<Tech> optionalTech = techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techDTO.getId());
+                    if (optionalTech.isPresent()) {
+                        techDTO.setLabel(techMap.get(techDTO.getId()));
+                    } else {
+                        iterator.remove();
+                    }
+                }
+            });
+        }
         return result;
     }
 
@@ -167,7 +202,8 @@ public class TechService {
         Tech newTech = Tech.builder()
                 .label(tech.getProjLang())
                 .description("")
-                .sector(sectorRepository.findById(0).orElseThrow(() -> new IllegalStateException("Default sector not found")))
+                .sector(sectorRepository.findById(0)
+                                .orElseThrow(() -> new IllegalStateException("Default sector not found")))
                 .createdDate(LocalDateTime.now())
                 .lastModifiedDate(LocalDateTime.now())
                 .ring(ringRepository.findById(0).orElseThrow(() -> new IllegalStateException("Default ring not found")))
@@ -177,7 +213,10 @@ public class TechService {
     }
 
     public List<Tech> getAllTechByCategory(List<Integer> ids) {
-        return techCategoryRepository.findByCategory_IdIn(ids).stream().map(TechCategory::getTech).collect(Collectors.toList());
+        return techCategoryRepository.findByCategory_IdIn(ids)
+                .stream()
+                .map(TechCategory::getTech)
+                .collect(Collectors.toList());
     }
 
     public List<TechSubscribeDTO> getTechSubscribed() {
@@ -186,7 +225,10 @@ public class TechService {
         if (techIds.isEmpty()) {
             return new ArrayList<>();
         }
-        return techRepository.findAllByIdInAndDeletedDateIsNull(techIds).stream().map(techMapper::toTechSubscribeDTO).collect(Collectors.toList());
+        return techRepository.findAllByIdInAndDeletedDateIsNull(techIds)
+                .stream()
+                .map(techMapper::toTechSubscribeDTO)
+                .collect(Collectors.toList());
     }
 
     public void addTech(List<PostTechDTO> techDTOs) throws JsonProcessingException {
@@ -198,8 +240,10 @@ public class TechService {
         List<Tech> existTechList = techRepository.findAllByLabelIn(labels);
         if (!existTechList.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writeValueAsString(existTechList.stream().map(tech -> Collections.singletonMap("label",
-                    tech.getLabel())).collect(Collectors.toList()));
+            String json = mapper.writeValueAsString(existTechList.stream()
+                                                            .map(tech -> Collections.singletonMap("label",
+                                                                                                  tech.getLabel()))
+                                                            .collect(Collectors.toList()));
             throw new ConflictException(json);
         }
         techDTOs.forEach(techDTOtoSave -> {
@@ -208,11 +252,11 @@ public class TechService {
                 log.info("tech: " + techDTOtoSave.getLabel() + ", Review - false");
                 techForSave.setReview(false);
             }
-            Ring ring = ringRepository.findById(techDTOtoSave.getRingId()).orElseThrow(() ->
-                    new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
+            Ring ring = ringRepository.findById(techDTOtoSave.getRingId())
+                    .orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTOtoSave.getRingId() + " not found."));
             techForSave.setRing(ring);
-            Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId()).orElseThrow(() ->
-                    new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
+            Sector sector = sectorRepository.findById(techDTOtoSave.getSectorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTOtoSave.getSectorId() + " not found."));
             techForSave.setSector(sector);
             techForSave.setCreatedDate(LocalDateTime.now());
             Tech savedTech = techRepository.save(techForSave);
@@ -225,7 +269,8 @@ public class TechService {
 
     private void saveTechCategoryWithoutDuplicate(Tech savedTech, List<TechCategoryDTO> categories) {
         Set<TechCategory> techCategories = categories.stream().map(category -> {
-            Category categoryEntity = categoryRepository.findById(category.getId()).orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
+            Category categoryEntity = categoryRepository.findById(category.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Category with id=" + category.getId() + " not found."));
             return TechCategory.builder().tech(savedTech).category(categoryEntity).build();
         }).collect(Collectors.toSet());
 
@@ -243,7 +288,8 @@ public class TechService {
                 throw new ConflictException("Поменять название технологии");
             }
         }
-        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
+        Tech tech = techRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         saveHistoryTech(tech);
         tech.setLastModifiedDate(LocalDateTime.now());
         if (techDTO.getLabel() != null) {
@@ -253,11 +299,13 @@ public class TechService {
             tech.setDescription(techDTO.getDescr());
         }
         if (techDTO.getRingId() != null) {
-            Ring ring = ringRepository.findById(techDTO.getRingId()).orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTO.getRingId() + " not found."));
+            Ring ring = ringRepository.findById(techDTO.getRingId())
+                    .orElseThrow(() -> new IllegalArgumentException("Ring with id=" + techDTO.getRingId() + " not found."));
             tech.setRing(ring);
         }
         if (techDTO.getSectorId() != null) {
-            Sector sector = sectorRepository.findById(techDTO.getSectorId()).orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTO.getSectorId() + " not found."));
+            Sector sector = sectorRepository.findById(techDTO.getSectorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Sector with id=" + techDTO.getSectorId() + " not found."));
             tech.setSector(sector);
         }
         if (techDTO.getLink() != null) {
@@ -279,28 +327,26 @@ public class TechService {
         List<HistoryTech> historyTechList = historyTechRepository.findByRefId(tech.getId());
         Integer maxVersion = 0;
         if (!historyTechList.isEmpty()) {
-            maxVersion = historyTechList.stream()
-                    .map(HistoryTech::getVersion)
-                    .max(Integer::compareTo).get();
+            maxVersion = historyTechList.stream().map(HistoryTech::getVersion).max(Integer::compareTo).get();
         }
         historyTechRepository.save(HistoryTech.builder()
-                .refId(tech.getId())
-                .version(maxVersion + 1)
-                .label(tech.getLabel())
-                .description(tech.getDescription())
-                .sectorId(tech.getSector().getId())
-                .ringId(tech.getRing().getId())
-                .link(tech.getLink())
-                .createdDate(tech.getLastModifiedDate() == null ?
-                        tech.getCreatedDate() : tech.getLastModifiedDate())
-                .build());
+                                           .refId(tech.getId())
+                                           .version(maxVersion + 1)
+                                           .label(tech.getLabel())
+                                           .description(tech.getDescription())
+                                           .sectorId(tech.getSector().getId())
+                                           .ringId(tech.getRing().getId())
+                                           .link(tech.getLink())
+                                           .createdDate(tech.getLastModifiedDate() == null ? tech.getCreatedDate() : tech.getLastModifiedDate())
+                                           .build());
     }
 
     public void deleteTech(Integer id) {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
-        Tech tech = techRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
+        Tech tech = techRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         tech.setDeletedDate(LocalDateTime.now());
         tech.setReview(true);
         techRepository.save(tech);
@@ -308,17 +354,16 @@ public class TechService {
 
     private void validatePostTechDTOFields(List<PostTechDTO> techDTOs) {
         for (PostTechDTO dto : techDTOs) {
-            if (dto.getLabel() == null || dto.getLabel().isEmpty() || dto.getRingId() == null || dto.getSectorId() == null) {
+            if (dto.getLabel() == null || dto.getLabel()
+                    .isEmpty() || dto.getRingId() == null || dto.getSectorId() == null) {
                 throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', or 'sector_id' is empty.");
             }
         }
     }
 
     private void validateTechDTOFields(TechDTO techDTO) {
-        if (techDTO.getLabel() == null
-                || techDTO.getLabel().isEmpty()
-                || techDTO.getRingId() == null
-                || techDTO.getSectorId() == null) {
+        if (techDTO.getLabel() == null || techDTO.getLabel()
+                .isEmpty() || techDTO.getRingId() == null || techDTO.getSectorId() == null) {
             throw new IllegalArgumentException("Bad Request: 'label', 'ring_id', 'id' or 'sector_id' is empty.");
         }
     }
@@ -327,7 +372,8 @@ public class TechService {
         List<Tech> techList = techRepository.findAllByReviewIsTrueAndDeletedDateIsNull();
         List<GetProductTechDto> techProducts = productClient.getTechProducts();
         Map<Tech, List<GetProductsDTO>> techProductsMap = createTechMap(techList, techProducts);
-        String fileName = "export_technology_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
+        String fileName = "export_technology_" + LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
         File tempFile = excelExporterService.exportTechnologies(techProductsMap, fileName);
         System.gc();
         if (tempFile != null) {
@@ -338,8 +384,7 @@ public class TechService {
     }
 
     private Map<Tech, List<GetProductsDTO>> createTechMap(List<Tech> techList, List<GetProductTechDto> techProducts) {
-        Map<Integer, Tech> techById = techList.stream()
-                .collect(Collectors.toMap(Tech::getId, Function.identity()));
+        Map<Integer, Tech> techById = techList.stream().collect(Collectors.toMap(Tech::getId, Function.identity()));
         Map<Tech, List<GetProductsDTO>> techMap = new HashMap<>();
         for (Tech tech : techList) {
             techMap.put(tech, new ArrayList<>());
@@ -368,14 +413,15 @@ public class TechService {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
-        techRepository.findById(techId).orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
+        techRepository.findById(techId)
+                .orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
         List<TechVersion> result = new ArrayList<>();
         IntervalTree newIntervalTree = new IntervalTree();
 
         for (PostTechVersionDTO postTechVersion : postTechVersionDTOS) {
             validatePostTechVersionDTO(postTechVersion);
-            ringRepository.findById(postTechVersion.getStatusId()).orElseThrow(() ->
-                    new IllegalArgumentException("Bad Request: Not found record in the ring table"));
+            ringRepository.findById(postTechVersion.getStatusId())
+                    .orElseThrow(() -> new IllegalArgumentException("Bad Request: Not found record in the ring table"));
             if (postTechVersion.getVersionStart() == null || postTechVersion.getVersionStart().isEmpty()) {
                 postTechVersion.setVersionStart("0.0.0");
             } else {
@@ -412,7 +458,8 @@ public class TechService {
     private String removeLeadingZeros(String version) {
         String[] parts = version.split("\\.");
         if (parts.length != 3) {
-            throw new IllegalArgumentException("Bad Request: Версия должна состоять из трех частей, разделенных точками.");
+            throw new IllegalArgumentException(
+                    "Bad Request: Версия должна состоять из трех частей, разделенных точками.");
         }
         String major = Long.toString(Long.parseLong(parts[0]));
         String minor = Long.toString(Long.parseLong(parts[1]));
@@ -433,7 +480,8 @@ public class TechService {
         for (String part : parts) {
             int partInt = Integer.parseInt(part);
             if (partInt < 0 || partInt > 9999) {
-                throw new IllegalArgumentException("Bad Request: Каждая часть версии должна быть в диапазоне от 0 до 9999.");
+                throw new IllegalArgumentException(
+                        "Bad Request: Каждая часть версии должна быть в диапазоне от 0 до 9999.");
             }
         }
         long result = 0;
@@ -459,8 +507,9 @@ public class TechService {
     }
 
     private void validatePostTechVersionDTO(PostTechVersionDTO postTechVersionDTO) {
-        if ((postTechVersionDTO.getVersionStart() == null || postTechVersionDTO.getVersionStart().isEmpty()) &&
-                (postTechVersionDTO.getVersionEnd() == null || postTechVersionDTO.getVersionEnd().isEmpty())) {
+        if ((postTechVersionDTO.getVersionStart() == null || postTechVersionDTO.getVersionStart()
+                .isEmpty()) && (postTechVersionDTO.getVersionEnd() == null || postTechVersionDTO.getVersionEnd()
+                .isEmpty())) {
             throw new IllegalArgumentException("Bad Request: 'VersionStart' и 'VersionEnd' не заполнены.");
         }
         if (postTechVersionDTO.getStatusId() == null) {
@@ -472,12 +521,14 @@ public class TechService {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
-        techRepository.findById(techId).orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
-        TechVersion currentVersion = techVersionRepository.findById(idVersion).orElseThrow(() ->
-                new NotFoundException("Not found: запись в таблице 'tech_version' с данным id не найден."));
+        techRepository.findById(techId)
+                .orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
+        TechVersion currentVersion = techVersionRepository.findById(idVersion)
+                .orElseThrow(() -> new NotFoundException(
+                        "Not found: запись в таблице 'tech_version' с данным id не найден."));
         validatePostTechVersionDTO(postTechVersionDTO);
-        ringRepository.findById(postTechVersionDTO.getStatusId()).orElseThrow(() ->
-                new IllegalArgumentException("Bad Request: Not found record in the ring table"));
+        ringRepository.findById(postTechVersionDTO.getStatusId())
+                .orElseThrow(() -> new IllegalArgumentException("Bad Request: Not found record in the ring table"));
         if (postTechVersionDTO.getVersionStart() == null || postTechVersionDTO.getVersionStart().isEmpty()) {
             postTechVersionDTO.setVersionStart("0.0.0");
         } else {
