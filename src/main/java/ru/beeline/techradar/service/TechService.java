@@ -216,11 +216,14 @@ public class TechService {
         return techRepository.save(newTech).getId();
     }
 
-    public List<Tech> getAllTechByCategory(List<Integer> ids) {
-        return techCategoryRepository.findByCategory_IdIn(ids)
+    public List<TechExtensionDTO> getAllTechByCategory(List<Integer> ids) {
+        List<Tech> techList = techCategoryRepository.findByCategory_IdIn(ids)
                 .stream()
                 .map(TechCategory::getTech)
+                .distinct()
                 .collect(Collectors.toList());
+
+        return techMapper.toTechDTOList(techList);
     }
 
     public List<TechSubscribeDTO> getTechSubscribed() {
