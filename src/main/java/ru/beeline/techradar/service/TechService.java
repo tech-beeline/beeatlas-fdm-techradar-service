@@ -105,8 +105,8 @@ public class TechService {
             List<TechVersion> techVersions = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(tech.getId());
             techVersions.forEach(techVersion -> {
                 versionsResult.add(techVersionMapper.toTechVersionDTO(techVersion,
-                                                                      ringRepository.findById(techVersion.getStatusId())
-                                                                              .get()));
+                        ringRepository.findById(techVersion.getStatusId())
+                                .get()));
             });
             TechAdvancedDTO techAdvancedDTO = techMapper.toTechAdvancedDTO(tech);
             techAdvancedDTO.setVersions(versionsResult);
@@ -207,7 +207,7 @@ public class TechService {
                 .label(tech.getProjLang())
                 .description("")
                 .sector(sectorRepository.findById(0)
-                                .orElseThrow(() -> new IllegalStateException("Default sector not found")))
+                        .orElseThrow(() -> new IllegalStateException("Default sector not found")))
                 .createdDate(LocalDateTime.now())
                 .lastModifiedDate(LocalDateTime.now())
                 .ring(ringRepository.findById(0).orElseThrow(() -> new IllegalStateException("Default ring not found")))
@@ -238,7 +238,7 @@ public class TechService {
                 .collect(Collectors.toList());
     }
 
-    public void addTech(List<PostTechDTO> techDTOs) throws JsonProcessingException {
+    public List<IdDTO> addTech(List<PostTechDTO> techDTOs) throws JsonProcessingException {
         if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
             throw new ForbiddenException("403 Forbidden.");
         }
@@ -248,11 +248,12 @@ public class TechService {
         if (!existTechList.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper();
             String json = mapper.writeValueAsString(existTechList.stream()
-                                                            .map(tech -> Collections.singletonMap("label",
-                                                                                                  tech.getLabel()))
-                                                            .collect(Collectors.toList()));
+                    .map(tech -> Collections.singletonMap("label",
+                            tech.getLabel()))
+                    .collect(Collectors.toList()));
             throw new ConflictException(json);
         }
+        List<IdDTO> savedTechIds = new ArrayList<>();
         techDTOs.forEach(techDTOtoSave -> {
             Tech techForSave = techMapper.toTech(techDTOtoSave);
             if (techForSave.getReview() == null) {
@@ -270,8 +271,10 @@ public class TechService {
             if (techDTOtoSave.getCategories() != null && !techDTOtoSave.getCategories().isEmpty()) {
                 saveTechCategoryWithoutDuplicate(savedTech, techDTOtoSave.getCategories());
             }
+            savedTechIds.add(IdDTO.builder().id(savedTech.getId()).build());
             log.info("tech save: " + techDTOtoSave.getLabel() + "tech review: " + savedTech.getReview());
         });
+        return savedTechIds;
     }
 
     private void saveTechCategoryWithoutDuplicate(Tech savedTech, List<TechCategoryDTO> categories) {
@@ -337,15 +340,15 @@ public class TechService {
             maxVersion = historyTechList.stream().map(HistoryTech::getVersion).max(Integer::compareTo).get();
         }
         historyTechRepository.save(HistoryTech.builder()
-                                           .refId(tech.getId())
-                                           .version(maxVersion + 1)
-                                           .label(tech.getLabel())
-                                           .description(tech.getDescription())
-                                           .sectorId(tech.getSector().getId())
-                                           .ringId(tech.getRing().getId())
-                                           .link(tech.getLink())
-                                           .createdDate(tech.getLastModifiedDate() == null ? tech.getCreatedDate() : tech.getLastModifiedDate())
-                                           .build());
+                .refId(tech.getId())
+                .version(maxVersion + 1)
+                .label(tech.getLabel())
+                .description(tech.getDescription())
+                .sectorId(tech.getSector().getId())
+                .ringId(tech.getRing().getId())
+                .link(tech.getLink())
+                .createdDate(tech.getLastModifiedDate() == null ? tech.getCreatedDate() : tech.getLastModifiedDate())
+                .build());
     }
 
     public void deleteTech(Integer id) {

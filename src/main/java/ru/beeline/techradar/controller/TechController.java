@@ -53,9 +53,8 @@ public class TechController {
 
     @PostMapping
     @ApiOperation(value = "")
-    public ResponseEntity addTech(@Valid @RequestBody List<PostTechDTO> techs) throws JsonProcessingException {
-        techService.addTech(techs);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<List<IdDTO>> addTech(@Valid @RequestBody List<PostTechDTO> techs) throws JsonProcessingException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(techService.addTech(techs));
     }
 
     @PatchMapping("/{id}")
