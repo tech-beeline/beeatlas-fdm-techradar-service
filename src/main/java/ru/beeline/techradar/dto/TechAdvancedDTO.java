@@ -18,4 +18,5 @@ public class TechAdvancedDTO {
     private RingDTO sector;
     private List<TechCategoryAdvancedDTO> category;
     private List<TechVersionDTO> versions;
+    private List<HistoryDTO> history;
 }
