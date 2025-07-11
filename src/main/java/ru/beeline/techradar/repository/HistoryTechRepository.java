@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface HistoryTechRepository extends JpaRepository<HistoryTech, Integer> {
     List<HistoryTech> findByRefId(Integer refId);
+
+    List<HistoryTech> findByRefIdIn(List<Integer> techIds);
 }

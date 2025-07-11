@@ -30,11 +30,13 @@ public class HistoryTech {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "sector_id")
-    private Integer sectorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sector_id")
+    private Sector sector;
 
-    @Column(name = "ring_id")
-    private Integer ringId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ring_id")
+    private Ring ring;
 
     @Column(name = "version")
     private Integer version;
