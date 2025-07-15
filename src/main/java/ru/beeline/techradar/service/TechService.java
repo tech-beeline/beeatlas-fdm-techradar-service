@@ -122,14 +122,13 @@ public class TechService {
     }
 
     private List<TechVersionDTO> getTechVersion(Tech tech) {
-        List<TechVersionDTO> versionsResult = new ArrayList<>();
         List<TechVersion> techVersions = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(tech.getId());
-        techVersions.forEach(techVersion -> {
-            versionsResult.add(techVersionMapper.toTechVersionDTO(techVersion,
-                    ringRepository.findById(techVersion.getStatusId())
-                            .get()));
-        });
-        return versionsResult;
+        return techVersions.stream()
+                .map(version -> techVersionMapper.toTechVersionDTO(
+                        version, ringRepository.findById(version.getStatusId())
+                                .orElseThrow(() -> new RuntimeException("Ring not found with id: " + version.getStatusId()))
+                ))
+                .collect(Collectors.toList());
     }
 
 
