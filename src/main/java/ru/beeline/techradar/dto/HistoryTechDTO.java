@@ -28,4 +28,5 @@ public class HistoryTechDTO {
     private RingDTO ring;
     private Integer currentVersion;
     private List<HistoryDTO> history;
+    private List<TechVersionDTO> versions;
 }

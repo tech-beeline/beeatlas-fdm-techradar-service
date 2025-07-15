@@ -102,15 +102,8 @@ public class TechService {
         List<TechAdvancedDTO> result = new ArrayList<>();
         Map<Integer, List<HistoryTech>> allHistoryTech = getAllTechHistories(techs);
         techs.forEach(tech -> {
-            List<TechVersionDTO> versionsResult = new ArrayList<>();
-            List<TechVersion> techVersions = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(tech.getId());
-            techVersions.forEach(techVersion -> {
-                versionsResult.add(techVersionMapper.toTechVersionDTO(techVersion,
-                        ringRepository.findById(techVersion.getStatusId())
-                                .get()));
-            });
             TechAdvancedDTO techAdvancedDTO = techMapper.toTechAdvancedDTO(tech);
-            techAdvancedDTO.setVersions(versionsResult);
+            techAdvancedDTO.setVersions(getTechVersion(tech));
             List<HistoryTech> history = allHistoryTech.getOrDefault(tech.getId(), Collections.emptyList());
             techAdvancedDTO.setHistory(mapToHistoryDTOList(history));
             result.add(techAdvancedDTO);
@@ -126,6 +119,16 @@ public class TechService {
         List<HistoryTech> allHistories = historyTechRepository.findByRefIdIn(techIds);
         return allHistories.stream()
                 .collect(Collectors.groupingBy(HistoryTech::getRefId));
+    }
+
+    private List<TechVersionDTO> getTechVersion(Tech tech) {
+        List<TechVersion> techVersions = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(tech.getId());
+        return techVersions.stream()
+                .map(version -> techVersionMapper.toTechVersionDTO(
+                        version, ringRepository.findById(version.getStatusId())
+                                .orElseThrow(() -> new RuntimeException("Ring not found with id: " + version.getStatusId()))
+                ))
+                .collect(Collectors.toList());
     }
 
 
@@ -144,6 +147,7 @@ public class TechService {
                 .map(category -> new TechCategoryAdvancedDTO(category.getId(), category.getName()))
                 .collect(Collectors.toList());
         HistoryTechDTO result = techHistoryMapper.toHistoryTechDTO(tech, sector, ring, categoriesResult);
+        result.setVersions(getTechVersion(tech));
         if (!historyTechList.isEmpty()) {
             List<HistoryDTO> historyDTOList = mapToHistoryDTOList(historyTechList);
             Integer maxVersion = historyTechList.stream()
