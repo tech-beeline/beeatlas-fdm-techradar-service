@@ -61,6 +61,9 @@ public class Tech {
     @Column(name = "review")
     private Boolean review;
 
+    @Column(name = "is_critical ")
+    private Boolean isCritical;
+
     @OneToMany(mappedBy = "tech")
     private List<PatternTech> children = new ArrayList<>();
 }

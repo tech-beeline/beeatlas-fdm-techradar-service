@@ -24,4 +24,6 @@ public class PostTechDTO {
     private Integer ringId;
 
     private Boolean review;
+
+    private Boolean isCritical;
 }

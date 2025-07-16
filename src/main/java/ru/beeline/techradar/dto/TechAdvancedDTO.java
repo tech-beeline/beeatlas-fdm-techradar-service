@@ -16,6 +16,7 @@ public class TechAdvancedDTO {
     private String lastModifiedDate;
     private RingDTO ring;
     private RingDTO sector;
+    private Boolean isCritical;
     private List<TechCategoryAdvancedDTO> category;
     private List<TechVersionDTO> versions;
     private List<HistoryDTO> history;

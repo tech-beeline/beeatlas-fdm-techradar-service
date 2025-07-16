@@ -348,6 +348,9 @@ public class TechService {
         if (techDTO.getReview() != null) {
             tech.setReview(techDTO.getReview());
         }
+        if (techDTO.getIsCritical() != null) {
+            tech.setIsCritical(techDTO.getIsCritical());
+        }
         tech.setDeletedDate(null);
         Tech savedTech = techRepository.save(tech);
         techCategoryRepository.deleteAllByTech(savedTech);
