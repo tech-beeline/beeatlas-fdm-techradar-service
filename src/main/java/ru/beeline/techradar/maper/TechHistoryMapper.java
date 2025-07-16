@@ -33,6 +33,7 @@ public class TechHistoryMapper {
                 .lastModifiedDate(tech.getLastModifiedDate())
                 .deletedDate(tech.getDeletedDate())
                 .ring(ringDTO)
+                .isCritical(tech.getIsCritical())
                 .category(categoriesResult)
                 .build();
     }
