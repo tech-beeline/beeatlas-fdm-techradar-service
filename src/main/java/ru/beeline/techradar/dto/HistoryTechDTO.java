@@ -17,6 +17,7 @@ public class HistoryTechDTO {
     private String label;
     private String description;
     private RingDTO sector;
+    private Boolean isCritical;
     private List<TechCategoryAdvancedDTO> category;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime createdDate;
@@ -28,4 +29,5 @@ public class HistoryTechDTO {
     private RingDTO ring;
     private Integer currentVersion;
     private List<HistoryDTO> history;
+    private List<TechVersionDTO> versions;
 }

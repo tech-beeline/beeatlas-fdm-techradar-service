@@ -27,4 +27,6 @@ public class TechDTO {
     private Integer ringId;
 
     private Boolean review;
+
+    private Boolean isCritical;
 }

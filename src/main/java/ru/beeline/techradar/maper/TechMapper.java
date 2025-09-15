@@ -20,12 +20,14 @@ public interface TechMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(source = "descr", target = "description")
     @Mapping(source = "review", target = "review")
+    @Mapping(source = "isCritical", target = "isCritical", defaultValue = "false")
     Tech toTech(PostTechDTO techDTO);
 
     TechSubscribeDTO toTechSubscribeDTO(Tech tech);
 
     @Mapping(source = "ring", target = "ring")
     @Mapping(source = "review", target = "review")
+    @Mapping(source = "isCritical", target = "isCritical")
     TechAdvancedDTO toTechAdvancedDTO(Tech tech);
 
     @Mapping(source = "createdDate", target = "createdDate", qualifiedByName = "localDateTimeToString")
