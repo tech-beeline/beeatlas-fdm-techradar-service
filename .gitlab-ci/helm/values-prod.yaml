@@ -7,6 +7,7 @@ env:
   INTEGRATION_DOCUMENT_SERVER_URL: "vault:eafdmmart/data/prod/fdm#documentserverurl"
   INTEGRATION_NOTIFICATION_SERVER_URL: "vault:eafdmmart/data/prod/fdm#notificationserver"
   INTEGRATION_PRODUCTS_SERVER_URL: "vault:eafdmmart/data/prod/fdm#productsserver"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "vault:eafdmmart/data/prod/fdm#opentelemetry"
 
   JWKS: "vault:eafdmmart/data/prod/fdm#jwks"
 
