@@ -15,10 +15,7 @@ import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.exception.ValidationException;
 import ru.beeline.techradar.maper.PatternMapper;
-import ru.beeline.techradar.repository.GroupRepository;
-import ru.beeline.techradar.repository.PatternRepository;
-import ru.beeline.techradar.repository.PatternTechRepository;
-import ru.beeline.techradar.repository.TechRepository;
+import ru.beeline.techradar.repository.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -34,6 +31,7 @@ public class PatternService {
     private final PatternMapper patternMapper;
     private final TechRepository techRepository;
     private final GroupRepository groupRepository;
+    private final PatternGroupRepository patternGroupRepository;
 
     private final PatternRepository patternRepository;
 
@@ -43,12 +41,14 @@ public class PatternService {
                           TechRepository techRepository,
                           PatternRepository patternRepository,
                           PatternTechRepository patternTechRepository,
+                          PatternGroupRepository patternGroupRepository,
                           GroupRepository groupRepository) {
         this.patternMapper = patternMapper;
         this.techRepository = techRepository;
         this.patternRepository = patternRepository;
         this.patternTechRepository = patternTechRepository;
         this.groupRepository = groupRepository;
+        this.patternGroupRepository = patternGroupRepository;
     }
 
     public IdDTO createPattern(PostPatternDTO patternDTO, String userRoles) {
@@ -183,5 +183,17 @@ public class PatternService {
                                                  .parentId(patternGroupDTO.getParentId())
                                                  .build()).getId())
                 .build();
+    }
+
+    public void deletePatternGroup(Integer id, String userRoles) {
+        if (!userRoles.contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        Group group = groupRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + id + " не найдена"));
+        if (patternGroupRepository.countPatternGroupByGroup(group) > 0) {
+            throw new RuntimeException("Группа с идентификатором " + id + " имеет паттерны");
+        }
+        groupRepository.delete(group);
     }
 }

@@ -32,7 +32,7 @@ public class PatternController {
 
     @PostMapping("/pattern/group")
     @ApiOperation(value = "Создание групп паттернов проектирования")
-    public ResponseEntity createPattern(@RequestBody PostPatternGroupDTO patternGroupDTO,
+    public ResponseEntity createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO,
                                         @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPatternGroup(patternGroupDTO, userRoles));
     }
@@ -42,6 +42,14 @@ public class PatternController {
     public ResponseEntity deletePattern(@PathVariable Integer id,
                                         @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         patternService.deletePattern(id, userRoles);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @DeleteMapping("/pattern/group/{id}")
+    @ApiOperation(value = "Удаление групп паттернов проектирования")
+    public ResponseEntity deletePatternGroup(@PathVariable Integer id,
+                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        patternService.deletePatternGroup(id, userRoles);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
