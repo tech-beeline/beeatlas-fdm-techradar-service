@@ -3,16 +3,19 @@ package ru.beeline.techradar.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.beeline.techradar.domain.Group;
 import ru.beeline.techradar.domain.Pattern;
 import ru.beeline.techradar.domain.PatternTech;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.IdDTO;
 import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
+import ru.beeline.techradar.dto.PostPatternGroupDTO;
 import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.exception.ValidationException;
 import ru.beeline.techradar.maper.PatternMapper;
+import ru.beeline.techradar.repository.GroupRepository;
 import ru.beeline.techradar.repository.PatternRepository;
 import ru.beeline.techradar.repository.PatternTechRepository;
 import ru.beeline.techradar.repository.TechRepository;
@@ -30,17 +33,22 @@ public class PatternService {
 
     private final PatternMapper patternMapper;
     private final TechRepository techRepository;
+    private final GroupRepository groupRepository;
 
     private final PatternRepository patternRepository;
 
     private final PatternTechRepository patternTechRepository;
 
-    public PatternService(PatternMapper patternMapper, TechRepository techRepository, PatternRepository patternRepository,
-                          PatternTechRepository patternTechRepository) {
+    public PatternService(PatternMapper patternMapper,
+                          TechRepository techRepository,
+                          PatternRepository patternRepository,
+                          PatternTechRepository patternTechRepository,
+                          GroupRepository groupRepository) {
         this.patternMapper = patternMapper;
         this.techRepository = techRepository;
         this.patternRepository = patternRepository;
         this.patternTechRepository = patternTechRepository;
+        this.groupRepository = groupRepository;
     }
 
     public IdDTO createPattern(PostPatternDTO patternDTO, String userRoles) {
@@ -54,10 +62,7 @@ public class PatternService {
                 throw new IllegalArgumentException("Указаны несуществующие технологии");
             }
             List<PatternTech> links = techList.stream()
-                    .map(tech -> PatternTech.builder()
-                            .pattern(pattern)
-                            .tech(tech)
-                            .build())
+                    .map(tech -> PatternTech.builder().pattern(pattern).tech(tech).build())
                     .collect(Collectors.toList());
             patternTechRepository.saveAll(links);
         }
@@ -96,7 +101,8 @@ public class PatternService {
 
     public void deletePattern(Integer id, String userRoles) {
         validateAdminRole(userRoles);
-        Pattern pattern = patternRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found: Pattern с данным id не найден."));
+        Pattern pattern = patternRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Not found: Pattern с данным id не найден."));
         if (pattern.getDeleteDate() == null) {
             pattern.setDeleteDate(LocalDateTime.now());
             patternRepository.save(pattern);
@@ -117,11 +123,11 @@ public class PatternService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(allTechIds);
-        Map<Integer, Tech> techMap = techList.stream()
-                .collect(Collectors.toMap(Tech::getId, Function.identity()));
+        Map<Integer, Tech> techMap = techList.stream().collect(Collectors.toMap(Tech::getId, Function.identity()));
         List<PatternDTO> result = new ArrayList<>();
         for (Pattern pattern : patterns) {
-            List<Tech> techs = pattern.getChildren().stream()
+            List<Tech> techs = pattern.getChildren()
+                    .stream()
                     .map(PatternTech::getTech)
                     .filter(Objects::nonNull)
                     .map(tech -> techMap.get(tech.getId()))
@@ -137,21 +143,45 @@ public class PatternService {
     }
 
     public List<PatternDTO> getAllTechnologyPatterns(Integer techId) {
-        techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techId).orElseThrow(() ->
-                new NotFoundException("Указана несуществующая технология"));
+        techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techId)
+                .orElseThrow(() -> new NotFoundException("Указана несуществующая технология"));
         List<Pattern> patterns = patternTechRepository.findAllByTechIdAndPatternDeleteDateIsNull(techId)
-                .stream().map(PatternTech::getPattern).collect(Collectors.toList());
+                .stream()
+                .map(PatternTech::getPattern)
+                .collect(Collectors.toList());
         return mapPatternsToDTOs(patterns);
     }
 
     public PatternDTO getPatternId(Integer id) {
-        Pattern pattern = patternRepository.findById(id).orElseThrow(() -> new NotFoundException("Паттерн с данным id не найден"));
-        List<Tech> techList = patternTechRepository.findAllByPatternAndTech_DeletedDateIsNullAndTech_ReviewIsTrue(pattern)
-                .stream().map(PatternTech::getTech).collect(Collectors.toList());
+        Pattern pattern = patternRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Паттерн с данным id не найден"));
+        List<Tech> techList = patternTechRepository.findAllByPatternAndTech_DeletedDateIsNullAndTech_ReviewIsTrue(
+                pattern).stream().map(PatternTech::getTech).collect(Collectors.toList());
         return patternMapper.convert(pattern, techList);
     }
 
     public List<PatternDTO> getPatternsAutoCheck() {
         return mapPatternsToDTOs(patternRepository.findAllByDeleteDateIsNullAndRuleNotNull());
+    }
+
+    public IdDTO createPatternGroup(PostPatternGroupDTO patternGroupDTO, String userRoles) {
+        if (!userRoles.contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        if (patternGroupDTO.getName() == null || patternGroupDTO.getName().equals("")) {
+            throw new IllegalArgumentException("name is empty");
+        }
+        Group parentGroup = null;
+        if (patternGroupDTO.getParentId() != null) {
+            parentGroup = groupRepository.findById(patternGroupDTO.getParentId())
+                    .orElseThrow(() -> new RuntimeException("Родитель с идентификатором " + patternGroupDTO.getParentId() + " не найден"));
+        }
+        return IdDTO.builder()
+                .id(groupRepository.save(Group.builder()
+                                                 .name(patternGroupDTO.getName())
+                                                 .parent(parentGroup)
+                                                 .parentId(patternGroupDTO.getParentId())
+                                                 .build()).getId())
+                .build();
     }
 }

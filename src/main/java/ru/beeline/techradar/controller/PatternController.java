@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
+import ru.beeline.techradar.dto.PostPatternGroupDTO;
 import ru.beeline.techradar.service.PatternService;
 
 import java.util.List;
@@ -23,10 +24,17 @@ public class PatternController {
     }
 
     @PostMapping("/pattern")
-    @ApiOperation(value = "Создания паттернов проектирования")
+    @ApiOperation(value = "Создание паттернов проектирования")
     public ResponseEntity createPattern(@RequestBody PostPatternDTO patternDTO,
                                         @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
+    }
+
+    @PostMapping("/pattern/group")
+    @ApiOperation(value = "Создание групп паттернов проектирования")
+    public ResponseEntity createPattern(@RequestBody PostPatternGroupDTO patternGroupDTO,
+                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPatternGroup(patternGroupDTO, userRoles));
     }
 
     @DeleteMapping("/pattern/{id}")

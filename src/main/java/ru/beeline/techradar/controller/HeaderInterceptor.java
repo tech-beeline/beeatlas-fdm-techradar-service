@@ -22,7 +22,7 @@ public class HeaderInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        boolean getAllPattern =  request.getRequestURI().contains("/api/v1/pattern") && ("GET".equalsIgnoreCase(request.getMethod()));
+        boolean getAllPattern =  request.getRequestURI().contains("/api/v1/pattern");
         try {
             if (request.getRequestURI().contains("/swagger")
                     || (request.getRequestURI().contains("/v2/api-docs"))) {
@@ -39,7 +39,6 @@ public class HeaderInterceptor implements HandlerInterceptor {
                     || request.getRequestURI().contains("/api/v1/processes")
                     || (request.getRequestURI().contains("/api/v1/tech")
                     && !request.getRequestURI().contains("/version")
-                    && !request.getRequestURI().contains("/subscribed")
                     && !request.getRequestURI().contains("/subscribed"))
             ) {
                 Map<String, Object> headers = new HashMap<>();
