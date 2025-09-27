@@ -42,6 +42,9 @@ public class Pattern {
     @Column(name = "delete_date")
     private LocalDateTime deleteDate;
 
+    @Column(name = "description")
+    private String description;
+
     @OneToMany(mappedBy = "pattern")
     private List<PatternTech> children = new ArrayList<>();
 }
