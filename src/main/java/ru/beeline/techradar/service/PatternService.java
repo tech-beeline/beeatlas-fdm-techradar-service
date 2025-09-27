@@ -196,4 +196,20 @@ public class PatternService {
         }
         groupRepository.delete(group);
     }
+
+    public void editPatternGroup(Integer id, PostPatternGroupDTO patternGroupDTO, String userRoles) {
+        if (!userRoles.contains("ADMINISTRATOR")) {
+            throw new ForbiddenException("403 Forbidden.");
+        }
+        Group group = groupRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + patternGroupDTO.getParentId() + " не найдена"));
+        Group parentGroup = null;
+        if (patternGroupDTO.getParentId() != null) {
+            parentGroup = groupRepository.findById(patternGroupDTO.getParentId())
+                    .orElseThrow(() -> new RuntimeException("Родитель с идентификатором " + patternGroupDTO.getParentId() + " не найден"));
+        }
+        group.setName(patternGroupDTO.getName());
+        group.setParent(parentGroup);
+        groupRepository.save(group);
+    }
 }
