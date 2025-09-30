@@ -38,7 +38,7 @@ public class PatternController {
                 .body(patternService.createPatternGroup(patternGroupDTO, userRoles));
     }
 
-    @PostMapping("/pattern/group/{id}")
+    @PatchMapping("/pattern/group/{id}")
     @ApiOperation(value = "Редактирование групп паттернов проектирования")
     public ResponseEntity editPatternGroup(@PathVariable Integer id,
                                            @RequestBody PostPatternGroupDTO patternGroupDTO,
