@@ -1,12 +1,8 @@
 package ru.beeline.techradar.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,8 +28,10 @@ public class Group {
 
      @ManyToOne(fetch = FetchType.LAZY)
      @JoinColumn(name = "parent_id", insertable = false, updatable = false)
+     @ToString.Exclude
      private Group parent;
 
      @OneToMany(mappedBy = "parent")
+     @ToString.Exclude
      private List<Group> children = new ArrayList<>();
 }

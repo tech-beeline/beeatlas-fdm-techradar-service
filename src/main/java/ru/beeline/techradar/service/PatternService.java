@@ -191,8 +191,11 @@ public class PatternService {
         }
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + id + " не найдена"));
-        if (patternGroupRepository.countPatternGroupByGroup(group) > 0) {
+        if (patternGroupRepository.countPatternGroupByGroupId(id) > 0) {
             throw new RuntimeException("Группа с идентификатором " + id + " имеет паттерны");
+        }
+        if (groupRepository.countByParentId(id) > 0) {
+            throw new RuntimeException("Группа с идентификатором " + id + " имеет дочерние элементы");
         }
         groupRepository.delete(group);
     }
