@@ -206,13 +206,18 @@ public class PatternService {
         }
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + patternGroupDTO.getParentId() + " не найдена"));
-        Group parentGroup = null;
-        if (patternGroupDTO.getParentId() != null) {
-            parentGroup = groupRepository.findById(patternGroupDTO.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Родитель с идентификатором " + patternGroupDTO.getParentId() + " не найден"));
+        if (patternGroupDTO.getName() != null) {
+            group.setName(patternGroupDTO.getName());
         }
-        group.setName(patternGroupDTO.getName());
-        group.setParent(parentGroup);
+        if (patternGroupDTO.getParentId() != null) {
+            Group parentGroup = null;
+            if (patternGroupDTO.getParentId() != null) {
+                parentGroup = groupRepository.findById(patternGroupDTO.getParentId())
+                        .orElseThrow(() -> new RuntimeException("Родитель с идентификатором " + patternGroupDTO.getParentId() + " не найден"));
+            }
+
+            group.setParentId(parentGroup.getId());
+        }
         groupRepository.save(group);
     }
 }
