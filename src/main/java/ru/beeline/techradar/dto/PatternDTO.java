@@ -19,6 +19,7 @@ public class PatternDTO {
     private Integer id;
     private String code;
     private String name;
+    private String description;
     private String rule;
     private Boolean isAntiPattern;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss.SSS")
