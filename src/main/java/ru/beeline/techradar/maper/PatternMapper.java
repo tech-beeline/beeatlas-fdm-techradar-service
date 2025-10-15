@@ -17,6 +17,7 @@ public class PatternMapper {
                 .id(pattern.getId())
                 .code(pattern.getCode())
                 .name(pattern.getName())
+                .description(pattern.getDescription())
                 .rule(pattern.getRule())
                 .isAntiPattern(pattern.getIsAntiPattern())
                 .createDate(pattern.getCreateDate())
