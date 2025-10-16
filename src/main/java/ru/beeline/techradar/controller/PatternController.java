@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.beeline.techradar.dto.PatternDTO;
+import ru.beeline.techradar.dto.PatternGroupDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
 import ru.beeline.techradar.dto.PostPatternGroupDTO;
 import ru.beeline.techradar.service.PatternService;
@@ -85,5 +86,11 @@ public class PatternController {
     @ApiOperation(value = "Просмотр паттернов принятых в компании, для которых есть правило автоматической проверки")
     public ResponseEntity<List<PatternDTO>> getPatternsAutoCheck() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternsAutoCheck());
+    }
+
+    @GetMapping("/pattern/group")
+    @ApiOperation(value = "Просмотр групп паттернов проектирования")
+    public ResponseEntity<List<PatternGroupDTO>> getAllPatternsGroup() {
+        return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatternsGroup());
     }
 }
