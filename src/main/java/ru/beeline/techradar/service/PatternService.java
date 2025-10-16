@@ -9,6 +9,7 @@ import ru.beeline.techradar.domain.PatternTech;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.IdDTO;
 import ru.beeline.techradar.dto.PatternDTO;
+import ru.beeline.techradar.dto.PatternGroupDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
 import ru.beeline.techradar.dto.PostPatternGroupDTO;
 import ru.beeline.techradar.exception.ForbiddenException;
@@ -178,10 +179,10 @@ public class PatternService {
         }
         return IdDTO.builder()
                 .id(groupRepository.save(Group.builder()
-                                                 .name(patternGroupDTO.getName())
-                                                 .parent(parentGroup)
-                                                 .parentId(patternGroupDTO.getParentId())
-                                                 .build()).getId())
+                        .name(patternGroupDTO.getName())
+                        .parent(parentGroup)
+                        .parentId(patternGroupDTO.getParentId())
+                        .build()).getId())
                 .build();
     }
 
@@ -219,5 +220,18 @@ public class PatternService {
             group.setParentId(parentGroup.getId());
         }
         groupRepository.save(group);
+    }
+
+    public List<PatternGroupDTO> getAllPatternsGroup() {
+        List<PatternGroupDTO> result = new ArrayList<>();
+        List<Group> patternGroups = groupRepository.findAll();
+        if (!patternGroups.isEmpty()) {
+            patternGroups.forEach(patternGroup -> {
+                result.add(PatternGroupDTO.builder()
+                        .id(patternGroup.getId())
+                        .name(patternGroup.getName()).build());
+            });
+        }
+        return result;
     }
 }
