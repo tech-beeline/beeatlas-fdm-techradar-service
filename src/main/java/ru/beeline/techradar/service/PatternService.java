@@ -7,6 +7,7 @@ import ru.beeline.techradar.domain.Group;
 import ru.beeline.techradar.domain.Pattern;
 import ru.beeline.techradar.domain.PatternTech;
 import ru.beeline.techradar.domain.Tech;
+import ru.beeline.techradar.dto.GroupDTO;
 import ru.beeline.techradar.dto.IdDTO;
 import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PatternGroupDTO;
@@ -231,6 +232,32 @@ public class PatternService {
                         .id(patternGroup.getId())
                         .name(patternGroup.getName()).build());
             });
+        }
+        return result;
+    }
+
+    public List<GroupDTO> getTreePatternsGroup() {
+        List<Group> groups = groupRepository.findAll();
+        Map<Integer, GroupDTO> dtoMap = groups.stream()
+                .collect(Collectors.toMap(
+                        Group::getId,
+                        group -> GroupDTO.builder()
+                                .id(group.getId())
+                                .name(group.getName())
+                                .children(new ArrayList<>())
+                                .build()
+                ));
+        List<GroupDTO> result = new ArrayList<>();
+        for (Group group : groups) {
+            GroupDTO dto = dtoMap.get(group.getId());
+            if (group.getParentId() == null) {
+                result.add(dto);
+            } else {
+                GroupDTO parent = dtoMap.get(group.getParentId());
+                if (parent != null) {
+                    parent.getChildren().add(dto);
+                }
+            }
         }
         return result;
     }
