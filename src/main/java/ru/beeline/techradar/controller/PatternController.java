@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.beeline.techradar.dto.GroupDTO;
 import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PatternGroupDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
@@ -92,5 +93,11 @@ public class PatternController {
     @ApiOperation(value = "Просмотр групп паттернов проектирования")
     public ResponseEntity<List<PatternGroupDTO>> getAllPatternsGroup() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatternsGroup());
+    }
+
+    @GetMapping("/pattern/group/tree")
+    @ApiOperation(value = "Просмотр дерева групп паттернов проектирования")
+    public ResponseEntity<List<GroupDTO>> getTreePatternsGroup() {
+        return ResponseEntity.status(HttpStatus.OK).body(patternService.getTreePatternsGroup());
     }
 }
