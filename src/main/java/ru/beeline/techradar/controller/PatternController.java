@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.beeline.techradar.dto.GroupDTO;
+import ru.beeline.techradar.dto.PatchPatternDTO;
 import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PatternGroupDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
@@ -23,46 +24,6 @@ public class PatternController {
 
     public PatternController(PatternService patternService) {
         this.patternService = patternService;
-    }
-
-    @PostMapping("/pattern")
-    @ApiOperation(value = "Создание паттернов проектирования")
-    public ResponseEntity createPattern(@RequestBody PostPatternDTO patternDTO,
-                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
-    }
-
-    @PostMapping("/pattern/group")
-    @ApiOperation(value = "Создание групп паттернов проектирования")
-    public ResponseEntity createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO,
-                                             @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(patternService.createPatternGroup(patternGroupDTO, userRoles));
-    }
-
-    @PatchMapping("/pattern/group/{id}")
-    @ApiOperation(value = "Редактирование групп паттернов проектирования")
-    public ResponseEntity editPatternGroup(@PathVariable Integer id,
-                                           @RequestBody PostPatternGroupDTO patternGroupDTO,
-                                           @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        patternService.editPatternGroup(id, patternGroupDTO, userRoles);
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
-    @DeleteMapping("/pattern/{id}")
-    @ApiOperation(value = "Удаление паттерна проектирования")
-    public ResponseEntity deletePattern(@PathVariable Integer id,
-                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        patternService.deletePattern(id, userRoles);
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
-    @DeleteMapping("/pattern/group/{id}")
-    @ApiOperation(value = "Удаление групп паттернов проектирования")
-    public ResponseEntity deletePatternGroup(@PathVariable Integer id,
-                                             @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        patternService.deletePatternGroup(id, userRoles);
-        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @GetMapping("/patterns")
@@ -99,5 +60,54 @@ public class PatternController {
     @ApiOperation(value = "Просмотр дерева групп паттернов проектирования")
     public ResponseEntity<List<GroupDTO>> getTreePatternsGroup() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getTreePatternsGroup());
+    }
+
+    @PostMapping("/pattern")
+    @ApiOperation(value = "Создание паттернов проектирования")
+    public ResponseEntity createPattern(@RequestBody PostPatternDTO patternDTO,
+                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
+    }
+
+    @PostMapping("/pattern/group")
+    @ApiOperation(value = "Создание групп паттернов проектирования")
+    public ResponseEntity createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO,
+                                             @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(patternService.createPatternGroup(patternGroupDTO, userRoles));
+    }
+
+    @PatchMapping("/pattern/group/{id}")
+    @ApiOperation(value = "Редактирование групп паттернов проектирования")
+    public ResponseEntity editPatternGroup(@PathVariable Integer id,
+                                           @RequestBody PostPatternGroupDTO patternGroupDTO,
+                                           @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        patternService.editPatternGroup(id, patternGroupDTO, userRoles);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PatchMapping("/pattern/{id}")
+    @ApiOperation(value = "Обновление паттерна проектирования")
+    public ResponseEntity editPattern(@PathVariable Integer id,
+                                           @RequestBody PatchPatternDTO patternDTO,
+                                           @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        patternService.editPattern(id, patternDTO, userRoles);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @DeleteMapping("/pattern/{id}")
+    @ApiOperation(value = "Удаление паттерна проектирования")
+    public ResponseEntity deletePattern(@PathVariable Integer id,
+                                        @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        patternService.deletePattern(id, userRoles);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @DeleteMapping("/pattern/group/{id}")
+    @ApiOperation(value = "Удаление групп паттернов проектирования")
+    public ResponseEntity deletePatternGroup(@PathVariable Integer id,
+                                             @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+        patternService.deletePatternGroup(id, userRoles);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

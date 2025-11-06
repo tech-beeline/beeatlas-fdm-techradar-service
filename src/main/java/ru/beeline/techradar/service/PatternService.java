@@ -5,10 +5,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.domain.Group;
 import ru.beeline.techradar.domain.Pattern;
+import ru.beeline.techradar.domain.PatternGroup;
 import ru.beeline.techradar.domain.PatternTech;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.dto.GroupDTO;
 import ru.beeline.techradar.dto.IdDTO;
+import ru.beeline.techradar.dto.PatchPatternDTO;
 import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PatternGroupDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
@@ -167,9 +169,7 @@ public class PatternService {
     }
 
     public IdDTO createPatternGroup(PostPatternGroupDTO patternGroupDTO, String userRoles) {
-        if (!userRoles.contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
+        validateAdminRole(userRoles);
         if (patternGroupDTO.getName() == null || patternGroupDTO.getName().equals("")) {
             throw new IllegalArgumentException("name is empty");
         }
@@ -188,9 +188,7 @@ public class PatternService {
     }
 
     public void deletePatternGroup(Integer id, String userRoles) {
-        if (!userRoles.contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
+        validateAdminRole(userRoles);
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + id + " не найдена"));
         if (patternGroupRepository.countPatternGroupByGroupId(id) > 0) {
@@ -203,9 +201,7 @@ public class PatternService {
     }
 
     public void editPatternGroup(Integer id, PostPatternGroupDTO patternGroupDTO, String userRoles) {
-        if (!userRoles.contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
+        validateAdminRole(userRoles);
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + patternGroupDTO.getParentId() + " не найдена"));
         if (patternGroupDTO.getName() != null) {
@@ -260,5 +256,137 @@ public class PatternService {
             }
         }
         return result;
+    }
+
+    public void editPattern(Integer id, PatchPatternDTO patternDTO, String userRoles) {
+        validateAdminRole(userRoles);
+        Pattern updatePattern = patternRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Паттерн с данным id не найден"));
+        boolean hasChanges = updatePattern(patternDTO, updatePattern);
+        boolean updateRelationsTechs = false;
+        boolean updateRelationsGroups = false;
+        if (patternDTO.getRelationsTech() != null && !patternDTO.getRelationsTech().isEmpty()) {
+            updateRelationsTechs = updateRelationsTechs(id, patternDTO.getRelationsTech(), updatePattern);
+        }
+        if (patternDTO.getGroups() != null && !patternDTO.getGroups().isEmpty()) {
+            updateRelationsGroups = updateRelationsGroups(id, patternDTO.getGroups(), updatePattern);
+        }
+        if (hasChanges || updateRelationsGroups || updateRelationsTechs) {
+            updatePattern.setUpdateDate(LocalDateTime.now());
+            patternRepository.save(updatePattern);
+        }
+    }
+
+    private boolean updatePattern(PatchPatternDTO patternDTO, Pattern pattern) {
+        boolean updateDate = false;
+        if (patternDTO.getIsAntiPattern() != null && !patternDTO.getIsAntiPattern().equals(pattern.getIsAntiPattern())) {
+            pattern.setIsAntiPattern(patternDTO.getIsAntiPattern());
+            updateDate = true;
+        }
+        if (patternDTO.getDsl() != null && !patternDTO.getDsl().equals(pattern.getDsl())) {
+            pattern.setDsl(patternDTO.getDsl());
+            updateDate = true;
+        }
+        if (patternDTO.getName() != null && !patternDTO.getName().equals(pattern.getName())) {
+            pattern.setName(patternDTO.getName());
+            updateDate = true;
+        }
+        if (patternDTO.getRule() != null && !patternDTO.getRule().equals(pattern.getRule())) {
+            pattern.setRule(patternDTO.getRule());
+            updateDate = true;
+        }
+        if (patternDTO.getDescription() != null && !patternDTO.getDescription().equals(pattern.getDescription())) {
+            pattern.setDescription(patternDTO.getDescription());
+            updateDate = true;
+        }
+        return updateDate;
+    }
+
+    private boolean updateRelationsTechs(Integer id, List<Integer> techIds, Pattern pattern) {
+        boolean updateDate;
+        List<PatternTech> patternTeches = patternTechRepository.findAllByPatternId(id);
+        updateDate = deletedPatternTeches(patternTeches, techIds);
+        List<Integer> existingIds = techRepository.findExistingIds(techIds);
+        if (existingIds.size() != techIds.size()) {
+            Set<Integer> existingSet = new HashSet<>(existingIds);
+            List<Integer> missingIds = techIds.stream()
+                    .filter(techId -> !existingSet.contains(techId))
+                    .toList();
+            throw new NotFoundException("Tech с id " + missingIds + " не найдены");
+        }
+        Set<Integer> existingTechIdsInPattern = patternTeches.stream()
+                .map(pt -> pt.getTech().getId())
+                .collect(Collectors.toSet());
+        List<PatternTech> savePatternTeches = techIds.stream()
+                .filter(techId -> !existingTechIdsInPattern.contains(techId))
+                .map(techId -> {
+                    Tech tech = techRepository.getReferenceById(techId);
+                    return PatternTech.builder()
+                            .pattern(pattern)
+                            .tech(tech)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        if (!savePatternTeches.isEmpty()) {
+            patternTechRepository.saveAll(savePatternTeches);
+            updateDate = true;
+        }
+        return updateDate;
+    }
+
+    private boolean deletedPatternTeches(List<PatternTech> patternTeches, List<Integer> techIds) {
+        boolean updateDate = false;
+        List<PatternTech> deletedPatternTeches = patternTeches.stream()
+                .filter(obj -> !techIds.contains(obj.getTech().getId()))
+                .toList();
+        if (!deletedPatternTeches.isEmpty()) {
+            patternTechRepository.deleteAll(deletedPatternTeches);
+            updateDate = true;
+        }
+        return updateDate;
+    }
+
+    private boolean updateRelationsGroups(Integer id, List<Integer> groupIds, Pattern pattern) {
+        boolean updateDate;
+        List<PatternGroup> patternGroups = patternGroupRepository.findAllByPatternId(id);
+        updateDate = deletedPatternGroups(patternGroups, groupIds);
+        List<Integer> existingIds = groupRepository.findExistingIds(groupIds);
+        if (existingIds.size() != groupIds.size()) {
+            Set<Integer> existingSet = new HashSet<>(existingIds);
+            List<Integer> missingIds = groupIds.stream()
+                    .filter(groupId -> !existingSet.contains(groupId))
+                    .toList();
+            throw new NotFoundException("Group с id " + missingIds + " не найдены");
+        }
+        Set<Integer> existingGroupIdsInPattern = patternGroups.stream()
+                .map(pg -> pg.getGroup().getId())
+                .collect(Collectors.toSet());
+        List<PatternGroup> savePatternGroups = groupIds.stream()
+                .filter(groupId -> !existingGroupIdsInPattern.contains(groupId))
+                .map(groupId -> {
+                    Group group = groupRepository.getReferenceById(groupId);
+                    return PatternGroup.builder()
+                            .pattern(pattern)
+                            .group(group)
+                            .build();
+                })
+                .toList();
+        if (!savePatternGroups.isEmpty()) {
+            patternGroupRepository.saveAll(savePatternGroups);
+            updateDate = true;
+        }
+        return updateDate;
+    }
+
+    private boolean deletedPatternGroups(List<PatternGroup> patternGroups, List<Integer> groupIds) {
+        boolean updateDate = false;
+        List<PatternGroup> deletedPatternGroups = patternGroups.stream()
+                .filter(obj -> !groupIds.contains(obj.getGroup().getId()))
+                .toList();
+        if (!deletedPatternGroups.isEmpty()) {
+            patternGroupRepository.deleteAll(deletedPatternGroups);
+            updateDate = true;
+        }
+        return updateDate;
     }
 }
