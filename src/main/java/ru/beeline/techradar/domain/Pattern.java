@@ -30,6 +30,8 @@ public class Pattern {
 
     private String rule;
 
+    private String dsl;
+
     @Column(name = "is_anti_pattern")
     private Boolean isAntiPattern;
 

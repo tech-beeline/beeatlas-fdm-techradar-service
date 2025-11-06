@@ -13,4 +13,6 @@ public interface PatternTechRepository extends JpaRepository<PatternTech, Intege
     List<PatternTech> findAllByTechIdAndPatternDeleteDateIsNull(Integer techId);
 
     List<PatternTech> findAllByPatternAndTech_DeletedDateIsNullAndTech_ReviewIsTrue(Pattern pattern);
+
+    List<PatternTech> findAllByPatternId(Integer patternId);
 }
