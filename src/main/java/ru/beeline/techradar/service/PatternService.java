@@ -70,11 +70,23 @@ public class PatternService {
                     .collect(Collectors.toList());
             patternTechRepository.saveAll(links);
         }
+        if (patternDTO.getGroups() != null && !patternDTO.getGroups().isEmpty()) {
+            Set<Integer> groupsSet = new HashSet<>(patternDTO.getGroups());
+            List<Group> groups = groupRepository.findAllById(new ArrayList<>(groupsSet));
+            if (groupsSet.size() != groups.size()) {
+                throw new IllegalArgumentException("Указаны несуществующие категории");
+            }
+            List<PatternGroup> patternGroups = groups.stream().map(group -> PatternGroup.builder().pattern(pattern)
+                    .group(group).build()).toList();
+            patternGroupRepository.saveAll(patternGroups);
+        }
         return new IdDTO(pattern.getId());
     }
 
     private Pattern createPattern(PostPatternDTO patternDTO) {
         Pattern pattern = Pattern.builder()
+                .dsl(patternDTO.getDsl())
+                .description(patternDTO.getDescription())
                 .code("")
                 .name(patternDTO.getName())
                 .rule(patternDTO.getRule())
@@ -91,6 +103,9 @@ public class PatternService {
         StringBuilder errMsg = new StringBuilder();
         if (patternDTO.getName() == null || patternDTO.getName().equals("")) {
             errMsg.append("Отсутствует обязательное поле name");
+        }
+        if (patternDTO.getGroups() == null) {
+            errMsg.append("Отсутствует обязательный список groups");
         }
         if (!errMsg.toString().isEmpty()) {
             throw new ValidationException(errMsg.toString());

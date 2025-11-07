@@ -13,8 +13,11 @@ import java.util.List;
 @NoArgsConstructor
 public class PostPatternDTO {
 
+    private String dsl;
     private String name;
     private String rule;
+    private String description;
     private Boolean isAntiPattern;
     private List<Integer> relationsTech;
+    private List<Integer> groups;
 }
