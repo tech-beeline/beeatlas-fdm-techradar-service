@@ -21,6 +21,7 @@ public class PatternDTO {
     private String name;
     private String description;
     private String rule;
+    private String dsl;
     private Boolean isAntiPattern;
     private List<PatternGroupDTO> groups;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss.SSS")

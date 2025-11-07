@@ -18,4 +18,5 @@ public class TechnologyDTO {
     private String label;
     private Ring ring;
     private Sector sector;
+    private Boolean isCritical;
 }
