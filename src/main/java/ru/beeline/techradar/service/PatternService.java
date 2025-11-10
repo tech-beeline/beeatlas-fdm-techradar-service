@@ -319,16 +319,12 @@ public class PatternService {
 
     private boolean updateRelationsTechs(Integer id, List<Integer> techIds, Pattern pattern) {
         boolean updateDate;
+        List<Tech> techList = techRepository.findAllByIdInAndDeletedDateIsNull(techIds);
+        if(techList.size()!=techIds.size()){
+            throw new IllegalArgumentException("Указаны несуществующие технологии");
+        }
         List<PatternTech> patternTeches = patternTechRepository.findAllByPatternId(id);
         updateDate = deletedPatternTeches(patternTeches, techIds);
-        List<Integer> existingIds = techRepository.findExistingIds(techIds);
-        if (existingIds.size() != techIds.size()) {
-            Set<Integer> existingSet = new HashSet<>(existingIds);
-            List<Integer> missingIds = techIds.stream()
-                    .filter(techId -> !existingSet.contains(techId))
-                    .toList();
-            throw new IllegalArgumentException("Tech с id " + missingIds + " не найдены");
-        }
         Set<Integer> existingTechIdsInPattern = patternTeches.stream()
                 .map(pt -> pt.getTech().getId())
                 .collect(Collectors.toSet());
@@ -367,11 +363,7 @@ public class PatternService {
         updateDate = deletedPatternGroups(patternGroups, groupIds);
         List<Integer> existingIds = groupRepository.findExistingIds(groupIds);
         if (existingIds.size() != groupIds.size()) {
-            Set<Integer> existingSet = new HashSet<>(existingIds);
-            List<Integer> missingIds = groupIds.stream()
-                    .filter(groupId -> !existingSet.contains(groupId))
-                    .toList();
-            throw new IllegalArgumentException("Group с id " + missingIds + " не найдены");
+            throw new IllegalArgumentException("Указаны несуществующие категории");
         }
         Set<Integer> existingGroupIdsInPattern = patternGroups.stream()
                 .map(pg -> pg.getGroup().getId())
