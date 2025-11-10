@@ -327,7 +327,7 @@ public class PatternService {
             List<Integer> missingIds = techIds.stream()
                     .filter(techId -> !existingSet.contains(techId))
                     .toList();
-            throw new NotFoundException("Tech с id " + missingIds + " не найдены");
+            throw new IllegalArgumentException("Tech с id " + missingIds + " не найдены");
         }
         Set<Integer> existingTechIdsInPattern = patternTeches.stream()
                 .map(pt -> pt.getTech().getId())
@@ -371,7 +371,7 @@ public class PatternService {
             List<Integer> missingIds = groupIds.stream()
                     .filter(groupId -> !existingSet.contains(groupId))
                     .toList();
-            throw new NotFoundException("Group с id " + missingIds + " не найдены");
+            throw new IllegalArgumentException("Group с id " + missingIds + " не найдены");
         }
         Set<Integer> existingGroupIdsInPattern = patternGroups.stream()
                 .map(pg -> pg.getGroup().getId())

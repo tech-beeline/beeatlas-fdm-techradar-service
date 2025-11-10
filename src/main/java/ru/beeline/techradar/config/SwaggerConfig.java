@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static ru.beeline.techradar.utils.Constant.*;
+
 @Configuration
 public class SwaggerConfig {
 
@@ -29,9 +31,27 @@ public class SwaggerConfig {
                 .build()
                 .globalRequestParameters(Arrays.asList(
                         new RequestParameterBuilder()
-                                .name("user-roles")
-                                .description("User roles header")
-                                .required(true)
+                                .name(USER_ROLES_HEADER)
+                                .description("Роли пользователя")
+                                .required(false)
+                                .in("header")
+                                .build(),
+                        new RequestParameterBuilder()
+                                .name(USER_ID_HEADER)
+                                .description("ID пользователя")
+                                .required(false)
+                                .in("header")
+                                .build(),
+                        new RequestParameterBuilder()
+                                .name(USER_PERMISSION_HEADER)
+                                .description("Права пользователя")
+                                .required(false)
+                                .in("header")
+                                .build(),
+                        new RequestParameterBuilder()
+                                .name(USER_PRODUCTS_IDS_HEADER)
+                                .description("ID продуктов пользователя")
+                                .required(false)
                                 .in("header")
                                 .build()
                 ));

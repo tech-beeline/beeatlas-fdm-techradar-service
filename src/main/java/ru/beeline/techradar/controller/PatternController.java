@@ -1,6 +1,7 @@
 package ru.beeline.techradar.controller;
 
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,8 @@ public class PatternController {
 
     @GetMapping("/pattern/{id}")
     @ApiOperation(value = "Просмотр паттерна по id ")
-    public ResponseEntity<PatternDTO> getPatternId(@PathVariable(name = "id") Integer id) {
+    public ResponseEntity<PatternDTO> getPatternId(@Parameter(description = "ID Паттерна")
+                                                   @PathVariable(name = "id") Integer id) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternId(id));
     }
 
@@ -88,9 +90,10 @@ public class PatternController {
 
     @PatchMapping("/pattern/{id}")
     @ApiOperation(value = "Обновление паттерна проектирования")
-    public ResponseEntity editPattern(@PathVariable Integer id,
-                                           @RequestBody PatchPatternDTO patternDTO,
-                                           @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+    public ResponseEntity editPattern(@Parameter(description = "ID Паттерна")
+                                      @PathVariable Integer id,
+                                      @RequestBody PatchPatternDTO patternDTO,
+                                      @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         patternService.editPattern(id, patternDTO, userRoles);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
