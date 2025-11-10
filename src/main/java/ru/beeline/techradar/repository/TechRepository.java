@@ -1,8 +1,6 @@
 package ru.beeline.techradar.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.beeline.techradar.domain.Tech;
 
@@ -25,7 +23,4 @@ public interface TechRepository extends JpaRepository<Tech, Integer> {
     Optional<Tech> findByIdAndDeletedDateIsNullAndReviewIsTrue(Integer id);
 
     List<Tech> findByIdInAndDeletedDateIsNullAndReviewIsTrue(Set<Integer> ids);
-
-    @Query("SELECT t.id FROM Tech t WHERE t.id IN :ids")
-    List<Integer> findExistingIds(@Param("ids") List<Integer> ids);
 }

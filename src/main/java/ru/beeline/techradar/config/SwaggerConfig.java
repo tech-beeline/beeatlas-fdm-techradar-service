@@ -2,9 +2,11 @@ package ru.beeline.techradar.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.builders.RequestParameterBuilder;
+import springfox.documentation.builders.ResponseBuilder;
 import springfox.documentation.service.*;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
@@ -23,38 +25,38 @@ public class SwaggerConfig {
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(getApiInfo())
+                .useDefaultResponseMessages(false)
+                .globalResponses(HttpMethod.GET, getGlobalErrorResponses())
+                .globalResponses(HttpMethod.POST, getGlobalErrorResponses())
+                .globalResponses(HttpMethod.PUT, getGlobalErrorResponses())
+                .globalResponses(HttpMethod.DELETE, getGlobalErrorResponses())
+                .globalResponses(HttpMethod.PATCH, getGlobalErrorResponses())
+                .globalRequestParameters(getGlobalHeaders())
                 .securitySchemes(List.of(apiKey()))
                 .securityContexts(List.of(securityContext()))
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("ru.beeline.techradar.controller"))
                 .paths(PathSelectors.any())
-                .build()
-                .globalRequestParameters(Arrays.asList(
-                        new RequestParameterBuilder()
-                                .name(USER_ROLES_HEADER)
-                                .description("Роли пользователя")
-                                .required(false)
-                                .in("header")
-                                .build(),
-                        new RequestParameterBuilder()
-                                .name(USER_ID_HEADER)
-                                .description("ID пользователя")
-                                .required(false)
-                                .in("header")
-                                .build(),
-                        new RequestParameterBuilder()
-                                .name(USER_PERMISSION_HEADER)
-                                .description("Права пользователя")
-                                .required(false)
-                                .in("header")
-                                .build(),
-                        new RequestParameterBuilder()
-                                .name(USER_PRODUCTS_IDS_HEADER)
-                                .description("ID продуктов пользователя")
-                                .required(false)
-                                .in("header")
-                                .build()
-                ));
+                .build();
+    }
+
+    private List<RequestParameter> getGlobalHeaders() {
+        return Arrays.asList(
+                new RequestParameterBuilder().name(USER_ROLES_HEADER).required(false).in("header").build(),
+                new RequestParameterBuilder().name(USER_ID_HEADER).required(false).in("header").build(),
+                new RequestParameterBuilder().name(USER_PERMISSION_HEADER).required(false).in("header").build(),
+                new RequestParameterBuilder().name(USER_PRODUCTS_IDS_HEADER).required(false).in("header").build()
+        );
+    }
+
+    private List<Response> getGlobalErrorResponses() {
+        return Arrays.asList(
+                new ResponseBuilder().code("400").description("Неверные входные данные").build(),
+                new ResponseBuilder().code("401").description("Требуется аутентификация").build(),
+                new ResponseBuilder().code("403").description("Доступ запрещен").build(),
+                new ResponseBuilder().code("404").description("Ресурс не найден").build(),
+                new ResponseBuilder().code("500").description("Внутренняя ошибка сервера").build()
+        );
     }
 
     private ApiKey apiKey() {
