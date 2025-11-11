@@ -320,7 +320,8 @@ public class PatternService {
     private boolean updateRelationsTechs(Integer id, List<Integer> techIds, Pattern pattern) {
         boolean updateDate;
         List<Tech> techList = techRepository.findAllByIdInAndDeletedDateIsNull(techIds);
-        if(techList.size()!=techIds.size()){
+        List<Tech> filteredPatterns = techList.stream().filter(Tech::getReview).toList();
+        if (techList.size() != techIds.size() || filteredPatterns.size() != techIds.size()) {
             throw new IllegalArgumentException("Указаны несуществующие технологии");
         }
         List<PatternTech> patternTeches = patternTechRepository.findAllByPatternId(id);
@@ -397,3 +398,4 @@ public class PatternService {
         return updateDate;
     }
 }
+
