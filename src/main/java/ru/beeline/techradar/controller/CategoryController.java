@@ -34,14 +34,14 @@ public class CategoryController {
 
     @PutMapping("/join")
     @ApiOperation(value = "Put category")
-    public ResponseEntity putCategory(@RequestBody PutTechCategoryDTO category) {
+    public ResponseEntity<Void> putCategory(@RequestBody PutTechCategoryDTO category) {
         categoryService.putCategory(category);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PatchMapping("/{id}")
     @ApiOperation(value = "Patch category")
-    public ResponseEntity patchCategory(@RequestBody PatchCategoryDTO category, @PathVariable String id) {
+    public ResponseEntity<Void> patchCategory(@RequestBody PatchCategoryDTO category, @PathVariable String id) {
         categoryService.patchCategory(id, category);
         return ResponseEntity.status(HttpStatus.OK).build();
 
@@ -49,7 +49,7 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "Delete category")
-    public ResponseEntity deleteCategory(@PathVariable String id) {
+    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.status(HttpStatus.OK).build();
 

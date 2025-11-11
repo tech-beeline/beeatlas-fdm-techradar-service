@@ -31,22 +31,12 @@ public class SwaggerConfig {
                 .globalResponses(HttpMethod.PUT, getGlobalErrorResponses())
                 .globalResponses(HttpMethod.DELETE, getGlobalErrorResponses())
                 .globalResponses(HttpMethod.PATCH, getGlobalErrorResponses())
-                .globalRequestParameters(getGlobalHeaders())
                 .securitySchemes(List.of(apiKey()))
                 .securityContexts(List.of(securityContext()))
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("ru.beeline.techradar.controller"))
                 .paths(PathSelectors.any())
                 .build();
-    }
-
-    private List<RequestParameter> getGlobalHeaders() {
-        return Arrays.asList(
-                new RequestParameterBuilder().name(USER_ROLES_HEADER).required(false).in("header").build(),
-                new RequestParameterBuilder().name(USER_ID_HEADER).required(false).in("header").build(),
-                new RequestParameterBuilder().name(USER_PERMISSION_HEADER).required(false).in("header").build(),
-                new RequestParameterBuilder().name(USER_PRODUCTS_IDS_HEADER).required(false).in("header").build()
-        );
     }
 
     private List<Response> getGlobalErrorResponses() {
