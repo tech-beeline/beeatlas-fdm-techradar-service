@@ -46,7 +46,7 @@ public class TechController {
 
     @PostMapping("/product-relation")
     @ApiOperation(value = " ")
-    public ResponseEntity createRelations(@RequestBody PostProductTechDTO tech) {
+    public ResponseEntity<Void> createRelations(@RequestBody PostProductTechDTO tech) {
         techService.createRelations(tech);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -59,7 +59,7 @@ public class TechController {
 
     @PatchMapping("/{id}")
     @ApiOperation(value = "")
-    public ResponseEntity patchTech(@PathVariable Integer id,
+    public ResponseEntity<Void> patchTech(@PathVariable Integer id,
                                     @RequestBody TechDTO tech) {
         techService.patchTech(id, tech);
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -67,14 +67,14 @@ public class TechController {
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "")
-    public ResponseEntity deleteTech(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteTech(@PathVariable Integer id) {
         techService.deleteTech(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @DeleteMapping("/{tech_id}/version/{version_id}")
     @ApiOperation(value = "")
-    public ResponseEntity deleteTechVersion(@PathVariable(name = "tech_id") Integer techId
+    public ResponseEntity<Void> deleteTechVersion(@PathVariable(name = "tech_id") Integer techId
             , @PathVariable(name = "version_id") Integer versionId) {
         techService.deleteTechVersion(techId, versionId);
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -82,7 +82,7 @@ public class TechController {
 
     @PostMapping("/{tech_id}/version")
     @ApiOperation(value = "")
-    public ResponseEntity createTechVersion(@RequestBody List<PostTechVersionDTO> postTechVersionDTOS,
+    public ResponseEntity<Void> createTechVersion(@RequestBody List<PostTechVersionDTO> postTechVersionDTOS,
                                             @PathVariable(name = "tech_id") Integer techId) {
         techService.createTechVersion(postTechVersionDTOS, techId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -90,7 +90,7 @@ public class TechController {
 
     @PatchMapping("/{tech_id}/version/{id_version}")
     @ApiOperation(value = "")
-    public ResponseEntity patchTechVersion(@RequestBody PostTechVersionDTO postTechVersionDTO,
+    public ResponseEntity<Void> patchTechVersion(@RequestBody PostTechVersionDTO postTechVersionDTO,
                                            @PathVariable(name = "tech_id") Integer techId,
                                            @PathVariable(name = "id_version") Integer idVersion) {
         techService.patchTechVersion(postTechVersionDTO, techId, idVersion);
