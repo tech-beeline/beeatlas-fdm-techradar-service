@@ -68,6 +68,7 @@ public class PatternController {
 
     @CustomHeaders
     @PostMapping("/pattern")
+    @ResponseStatus(HttpStatus.CREATED)
     @ApiOperation(value = "Создание паттернов проектирования")
     public ResponseEntity<IdDTO> createPattern(@RequestBody PostPatternDTO patternDTO,
                                                @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
@@ -76,6 +77,7 @@ public class PatternController {
 
     @CustomHeaders
     @PostMapping("/pattern/group")
+    @ResponseStatus(HttpStatus.CREATED)
     @ApiOperation(value = "Создание групп паттернов проектирования")
     public ResponseEntity<IdDTO> createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO,
                                                     @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
