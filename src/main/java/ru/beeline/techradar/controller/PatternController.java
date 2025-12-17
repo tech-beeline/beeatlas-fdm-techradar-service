@@ -123,4 +123,5 @@ public class PatternController {
         patternService.deletePatternGroup(id, userRoles);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
 }
