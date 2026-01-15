@@ -32,6 +32,12 @@ public class TechController {
         return ResponseEntity.status(HttpStatus.OK).body(techService.getTechById(id));
     }
 
+    @GetMapping("/by-ids")
+    @ApiOperation(value = "Получение списка технологий по id")
+    public ResponseEntity<List<TechAdvancedGetDTO>> getTechById(@RequestParam(required = true) List<Integer> ids) {
+        return ResponseEntity.status(HttpStatus.OK).body(techService.getTechByIds(ids));
+    }
+
     @GetMapping("/subscribed")
     @ApiOperation(value = "get all Subscribed")
     public List<TechSubscribeDTO> getSubscribed() {

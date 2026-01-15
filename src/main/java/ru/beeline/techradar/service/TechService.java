@@ -602,4 +602,11 @@ public class TechService {
             techVersionRepository.save(updatedVersion);
         }
     }
+
+    public List<TechAdvancedGetDTO> getTechByIds(List<Integer> ids) {
+        return techRepository.findAllByIdInAndDeletedDateIsNull(ids)
+                .stream()
+                .map(techMapper::toTechAdvancedGetDTO)
+                .collect(Collectors.toList());
+    }
 }

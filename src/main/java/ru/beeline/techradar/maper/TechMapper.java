@@ -30,6 +30,11 @@ public interface TechMapper {
     @Mapping(source = "isCritical", target = "isCritical")
     TechAdvancedDTO toTechAdvancedDTO(Tech tech);
 
+    @Mapping(source = "ring", target = "ring")
+    @Mapping(source = "review", target = "review")
+    @Mapping(source = "isCritical", target = "isCritical")
+    TechAdvancedGetDTO toTechAdvancedGetDTO(Tech tech);
+
     @Mapping(source = "createdDate", target = "createdDate", qualifiedByName = "localDateTimeToString")
     @Mapping(source = "deletedDate", target = "deletedDate", qualifiedByName = "localDateTimeToString")
     @Mapping(source = "lastModifiedDate", target = "lastModifiedDate", qualifiedByName = "localDateTimeToString")
