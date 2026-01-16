@@ -604,7 +604,7 @@ public class TechService {
     }
 
     public List<TechAdvancedGetDTO> getTechByIds(List<Integer> ids) {
-        return techRepository.findAllByIdInAndDeletedDateIsNull(ids)
+        return techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(ids)
                 .stream()
                 .map(techMapper::toTechAdvancedGetDTO)
                 .collect(Collectors.toList());

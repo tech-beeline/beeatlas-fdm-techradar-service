@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.beeline.techradar.domain.Tech;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,5 +23,5 @@ public interface TechRepository extends JpaRepository<Tech, Integer> {
 
     Optional<Tech> findByIdAndDeletedDateIsNullAndReviewIsTrue(Integer id);
 
-    List<Tech> findByIdInAndDeletedDateIsNullAndReviewIsTrue(Set<Integer> ids);
+    List<Tech> findByIdInAndDeletedDateIsNullAndReviewIsTrue(Collection<Integer> ids);
 }
