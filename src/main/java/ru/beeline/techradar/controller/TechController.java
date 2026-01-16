@@ -1,7 +1,10 @@
 package ru.beeline.techradar.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +36,12 @@ public class TechController {
     }
 
     @GetMapping("/by-ids")
-    @ApiOperation(value = "Получение списка технологий по id")
+    @ApiOperation(value = "Получить технологии по ID")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 400, message = "Bad Request")
+    })
+    @ApiImplicitParam(name = "ids", value = "Список ID", dataType = "integer", paramType = "query")
     public ResponseEntity<List<TechAdvancedGetDTO>> getTechById(@RequestParam(required = true) List<Integer> ids) {
         return ResponseEntity.status(HttpStatus.OK).body(techService.getTechByIds(ids));
     }
