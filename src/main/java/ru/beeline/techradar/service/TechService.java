@@ -587,6 +587,7 @@ public class TechService {
             validateVersions(postTechVersionDTO.getVersionStart(), postTechVersionDTO.getVersionEnd());
             List<TechVersion> existingtechVersionList = techVersionRepository.findAllByTechIdAndDeletedDateIsNull(techId);
             IntervalTree existingIntervalTree = new IntervalTree();
+
             for (TechVersion existingVersion : existingtechVersionList) {
                 if (existingVersion.getId().equals(idVersion)) {
                     continue;
