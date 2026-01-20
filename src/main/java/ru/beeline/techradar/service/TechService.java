@@ -596,6 +596,7 @@ public class TechService {
             TechVersion updatedVersion = techVersionMapper.toTechVersion(postTechVersionDTO, techId);
             updatedVersion.setId(currentVersion.getId());
             updatedVersion.setLastModifiedDate(LocalDateTime.now());
+
             if (existingIntervalTree.overlaps(updatedVersion)) {
                 throw new IllegalArgumentException("Bad Request: Новая версия пересекается с существующими.");
             }
