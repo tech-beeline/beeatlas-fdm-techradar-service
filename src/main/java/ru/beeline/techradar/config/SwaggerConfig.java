@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.builders.RequestParameterBuilder;
 import springfox.documentation.builders.ResponseBuilder;
 import springfox.documentation.service.*;
 import springfox.documentation.spi.DocumentationType;
@@ -16,15 +15,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static ru.beeline.techradar.utils.Constant.*;
-
 @Configuration
 public class SwaggerConfig {
 
     @Bean
     public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .apiInfo(getApiInfo())
+        return new Docket(DocumentationType.SWAGGER_2).apiInfo(getApiInfo())
                 .useDefaultResponseMessages(false)
                 .globalResponses(HttpMethod.GET, getGlobalErrorResponses())
                 .globalResponses(HttpMethod.POST, getGlobalErrorResponses())
@@ -40,13 +36,8 @@ public class SwaggerConfig {
     }
 
     private List<Response> getGlobalErrorResponses() {
-        return Arrays.asList(
-                new ResponseBuilder().code("400").description("Неверные входные данные").build(),
-                new ResponseBuilder().code("401").description("Требуется аутентификация").build(),
-                new ResponseBuilder().code("403").description("Доступ запрещен").build(),
-                new ResponseBuilder().code("404").description("Ресурс не найден").build(),
-                new ResponseBuilder().code("500").description("Внутренняя ошибка сервера").build()
-        );
+        return Arrays.asList(new ResponseBuilder().code("400").description("Неверные входные данные").build(),
+                             new ResponseBuilder().code("500").description("Внутренняя ошибка сервера").build());
     }
 
     private ApiKey apiKey() {
