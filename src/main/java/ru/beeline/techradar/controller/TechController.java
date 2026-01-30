@@ -31,6 +31,10 @@ public class TechController {
 
     @GetMapping("/{id}")
     @ApiOperation(value = "Получение технологии и истории статусов по id")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     public ResponseEntity<HistoryTechDTO> getTechById(@PathVariable Integer id) {
         return ResponseEntity.status(HttpStatus.OK).body(techService.getTechById(id));
     }
@@ -59,20 +63,30 @@ public class TechController {
     }
 
     @PostMapping("/product-relation")
-    @ApiOperation(value = " ")
+    @ApiOperation(value = "Add relation")
     public ResponseEntity<Void> createRelations(@RequestBody PostProductTechDTO tech) {
         techService.createRelations(tech);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping
-    @ApiOperation(value = "")
+    @ApiOperation(value = "Add tech")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Version updated successfully"),
+            @ApiResponse(code = 403, message = "Forbidden – missing required ADMINISTRATOR role or authorization header"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     public ResponseEntity<List<IdDTO>> addTech(@Valid @RequestBody List<PostTechDTO> techs) throws JsonProcessingException {
         return ResponseEntity.status(HttpStatus.CREATED).body(techService.addTech(techs));
     }
 
     @PatchMapping("/{id}")
-    @ApiOperation(value = "")
+    @ApiOperation(value = "Update tech")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Version updated successfully"),
+            @ApiResponse(code = 403, message = "Forbidden – missing required ADMINISTRATOR role or authorization header"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     public ResponseEntity<Void> patchTech(@PathVariable Integer id,
                                     @RequestBody TechDTO tech) {
         techService.patchTech(id, tech);
@@ -80,22 +94,33 @@ public class TechController {
     }
 
     @DeleteMapping("/{id}")
-    @ApiOperation(value = "")
+    @ApiOperation(value = "Delete tech")
     public ResponseEntity<Void> deleteTech(@PathVariable Integer id) {
         techService.deleteTech(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @DeleteMapping("/{tech_id}/version/{version_id}")
-    @ApiOperation(value = "")
-    public ResponseEntity<Void> deleteTechVersion(@PathVariable(name = "tech_id") Integer techId
+    @ApiOperation(value = "Delete tech version")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Version updated successfully"),
+            @ApiResponse(code = 403, message = "Forbidden – missing required ADMINISTRATOR role or authorization header"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })    public ResponseEntity<Void> deleteTechVersion(@PathVariable(name = "tech_id") Integer techId
             , @PathVariable(name = "version_id") Integer versionId) {
         techService.deleteTechVersion(techId, versionId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping("/{tech_id}/version")
-    @ApiOperation(value = "")
+    @ApiOperation(value = "Update tech version")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Version updated successfully"),
+            @ApiResponse(code = 400, message = "Bad request – validation error (missing/invalid fields, version format, overlapping ranges, etc.)"),
+            @ApiResponse(code = 403, message = "Forbidden – missing required ADMINISTRATOR role or authorization header"),
+            @ApiResponse(code = 404, message = "Not found – tech_id or id_version does not exist"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     public ResponseEntity<Void> createTechVersion(@RequestBody List<PostTechVersionDTO> postTechVersionDTOS,
                                             @PathVariable(name = "tech_id") Integer techId) {
         techService.createTechVersion(postTechVersionDTOS, techId);
@@ -103,7 +128,14 @@ public class TechController {
     }
 
     @PatchMapping("/{tech_id}/version/{id_version}")
-    @ApiOperation(value = "")
+    @ApiOperation(value = "Update tech version")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Version updated successfully"),
+            @ApiResponse(code = 400, message = "Bad request – validation error (missing/invalid fields, version format, overlapping ranges, etc.)"),
+            @ApiResponse(code = 403, message = "Forbidden – missing required ADMINISTRATOR role or authorization header"),
+            @ApiResponse(code = 404, message = "Not found – tech_id or id_version does not exist"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     public ResponseEntity<Void> patchTechVersion(@RequestBody PostTechVersionDTO postTechVersionDTO,
                                            @PathVariable(name = "tech_id") Integer techId,
                                            @PathVariable(name = "id_version") Integer idVersion) {
@@ -112,8 +144,14 @@ public class TechController {
     }
 
     @PostMapping("/export/{doc_id}")
-    @ApiOperation(value = "")
-    public ResponseEntity<TechExportDTO> patchTechVersion(@PathVariable(name = "doc_id") Integer docId) {
+    @ApiOperation(value = "Export document")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "Export created successfully",
+                    response = TechExportDTO.class),   // doc_id returned inside DTO
+            @ApiResponse(code = 503, message = "Service unavailable – DB access problem or export error"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
+    public ResponseEntity<TechExportDTO> postTechVersion(@PathVariable(name = "doc_id") Integer docId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(techService.export(docId));
     }
 }

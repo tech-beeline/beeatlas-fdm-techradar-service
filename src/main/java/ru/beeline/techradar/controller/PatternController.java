@@ -1,18 +1,14 @@
 package ru.beeline.techradar.controller;
 
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.beeline.techradar.annotation.CustomHeaders;
-import ru.beeline.techradar.dto.GroupDTO;
-import ru.beeline.techradar.dto.IdDTO;
-import ru.beeline.techradar.dto.PatchPatternDTO;
-import ru.beeline.techradar.dto.PatternDTO;
-import ru.beeline.techradar.dto.PatternGroupDTO;
-import ru.beeline.techradar.dto.PostPatternDTO;
-import ru.beeline.techradar.dto.PostPatternGroupDTO;
+import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.service.PatternService;
 
 import java.util.List;
@@ -70,17 +66,26 @@ public class PatternController {
     @PostMapping("/pattern")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiOperation(value = "Создание паттернов проектирования")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Pattern created successfully",
+                    response = IdDTO.class),
+            @ApiResponse(code = 400, message = "Bad request – invalid data"),
+            @ApiResponse(code = 403, message = "Forbidden")
+    })
     public ResponseEntity<IdDTO> createPattern(@RequestBody PostPatternDTO patternDTO,
                                                @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
     }
 
+
     @CustomHeaders
     @PostMapping("/pattern/group")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiOperation(value = "Создание групп паттернов проектирования")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Group created successfully", response = IdDTO.class), @ApiResponse(code = 400, message = "Bad request – invalid data"), @ApiResponse(code = 403, message = "Forbidden"), @ApiResponse(code = 500, message = "Internal server error")})
     public ResponseEntity<IdDTO> createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO,
                                                     @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(patternService.createPatternGroup(patternGroupDTO, userRoles));
     }
@@ -88,6 +93,12 @@ public class PatternController {
     @CustomHeaders
     @PatchMapping("/pattern/group/{id}")
     @ApiOperation(value = "Редактирование групп паттернов проектирования")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Group updated successfully"),
+            @ApiResponse(code = 400, message = "Bad request – invalid data"),
+            @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 404, message = "Group not found")
+    })
     public ResponseEntity<Void> editPatternGroup(@PathVariable Integer id,
                                                  @RequestBody PostPatternGroupDTO patternGroupDTO,
                                                  @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
@@ -98,6 +109,11 @@ public class PatternController {
     @CustomHeaders
     @PatchMapping("/pattern/{id}")
     @ApiOperation(value = "Обновление паттерна проектирования")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Pattern updated successfully"),
+            @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 404, message = "Pattern not found"),
+    })
     public ResponseEntity<Void> editPattern(@Parameter(description = "ID Паттерна")
                                             @PathVariable Integer id,
                                             @RequestBody PatchPatternDTO patternDTO,
@@ -109,6 +125,11 @@ public class PatternController {
     @CustomHeaders
     @DeleteMapping("/pattern/{id}")
     @ApiOperation(value = "Удаление паттерна проектирования")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Pattern deleted successfully"),
+            @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 404, message = "Pattern not found"),
+    })
     public ResponseEntity<Void> deletePattern(@PathVariable Integer id,
                                               @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         patternService.deletePattern(id, userRoles);
@@ -118,6 +139,12 @@ public class PatternController {
     @CustomHeaders
     @DeleteMapping("/pattern/group/{id}")
     @ApiOperation(value = "Удаление групп паттернов проектирования")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Group deleted successfully"),
+            @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 404, message = "Group not found"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     public ResponseEntity<Void> deletePatternGroup(@PathVariable Integer id,
                                                    @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
         patternService.deletePatternGroup(id, userRoles);

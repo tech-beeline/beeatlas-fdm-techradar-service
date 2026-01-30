@@ -600,6 +600,7 @@ public class TechService {
             if (existingIntervalTree.overlaps(updatedVersion)) {
                 throw new IllegalArgumentException("Bad Request: Новая версия пересекается с существующими.");
             }
+
             techVersionRepository.save(updatedVersion);
         }
     }

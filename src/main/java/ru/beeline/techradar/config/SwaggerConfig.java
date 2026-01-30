@@ -22,22 +22,12 @@ public class SwaggerConfig {
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2).apiInfo(getApiInfo())
                 .useDefaultResponseMessages(false)
-                .globalResponses(HttpMethod.GET, getGlobalErrorResponses())
-                .globalResponses(HttpMethod.POST, getGlobalErrorResponses())
-                .globalResponses(HttpMethod.PUT, getGlobalErrorResponses())
-                .globalResponses(HttpMethod.DELETE, getGlobalErrorResponses())
-                .globalResponses(HttpMethod.PATCH, getGlobalErrorResponses())
                 .securitySchemes(List.of(apiKey()))
                 .securityContexts(List.of(securityContext()))
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("ru.beeline.techradar.controller"))
                 .paths(PathSelectors.any())
                 .build();
-    }
-
-    private List<Response> getGlobalErrorResponses() {
-        return Arrays.asList(new ResponseBuilder().code("400").description("Неверные входные данные").build(),
-                             new ResponseBuilder().code("500").description("Внутренняя ошибка сервера").build());
     }
 
     private ApiKey apiKey() {
