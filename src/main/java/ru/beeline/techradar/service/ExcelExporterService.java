@@ -7,7 +7,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
-import ru.beeline.fdmlib.dto.product.GetProductsDTO;
+import ru.beeline.techradar.dto.product.GetProductsDTO;
 import ru.beeline.techradar.domain.Tech;
 
 import java.io.File;

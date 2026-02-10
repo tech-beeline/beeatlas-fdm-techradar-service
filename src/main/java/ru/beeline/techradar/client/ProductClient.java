@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import ru.beeline.techradar.dto.ProductDTO;
 import ru.beeline.techradar.dto.ProductTechRelationDTO;
 import ru.beeline.techradar.exception.NotFoundException;
-import ru.beeline.fdmlib.dto.product.GetProductTechDto;
+import ru.beeline.techradar.dto.product.GetProductTechDto;
 import java.util.List;
 
 

@@ -1,7 +1,7 @@
 package ru.beeline.techradar.maper;
 
 import org.springframework.stereotype.Component;
-import ru.beeline.fdmlib.dto.techradar.ProcessDTO;
+import ru.beeline.techradar.dto.ProcessDTO;
 import ru.beeline.techradar.domain.Process;
 
 import java.util.List;

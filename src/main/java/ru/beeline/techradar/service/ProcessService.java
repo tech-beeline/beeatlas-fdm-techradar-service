@@ -3,7 +3,7 @@ package ru.beeline.techradar.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.beeline.fdmlib.dto.techradar.ProcessDTO;
+import ru.beeline.techradar.dto.ProcessDTO;
 import ru.beeline.techradar.maper.ProcessMapper;
 import ru.beeline.techradar.repository.ProcessRepository;
 
