@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2024 PJSC VimpelCom
+ */
+
 package ru.beeline.techradar.maper;
 
 import org.springframework.stereotype.Component;

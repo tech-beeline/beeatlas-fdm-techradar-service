@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) 2024 PJSC VimpelCom
+ */
+
 package ru.beeline.techradar.dto;
 
 import lombok.*;
-import ru.beeline.techradar.domain.Group;
 
 import java.util.List;
 

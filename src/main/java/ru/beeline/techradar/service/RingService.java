@@ -1,10 +1,13 @@
+/*
+ * Copyright (c) 2024 PJSC VimpelCom
+ */
+
 package ru.beeline.techradar.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.beeline.techradar.domain.Ring;
-import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.repository.RingRepository;
 
 import java.util.List;
