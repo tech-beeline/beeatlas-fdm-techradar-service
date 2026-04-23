@@ -1,0 +1,1 @@
+ALTER TABLE techradar.tech ADD COLUMN is_critical BOOLEAN DEFAULT FALSE;

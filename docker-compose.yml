@@ -1,0 +1,54 @@
+services:
+  techradar-postgres:
+    image: postgres:15-alpine
+    container_name: techradar-postgres
+    environment:
+      POSTGRES_DB: ${TECHRADAR_POSTGRES_DB:-techradar}
+      POSTGRES_USER: ${TECHRADAR_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${TECHRADAR_POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${TECHRADAR_POSTGRES_NODEPORT:-5432}:5432"
+    volumes:
+      - techradar-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TECHRADAR_POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beeatlas-network
+
+  techradar-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: techradar-backend-app
+    depends_on:
+      techradar-postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${TECHRADAR_POSTGRES_HOST:-techradar-postgres}:5432/${TECHRADAR_POSTGRES_DB:-techradar}
+      SPRING_DATASOURCE_USERNAME: ${TECHRADAR_POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${TECHRADAR_POSTGRES_PASSWORD:-postgres}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: techradar
+      SPRING_FLYWAY_DEFAULT_SCHEMA: techradar
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_CLEAN_DISABLED: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    ports:
+      - "${TECHRADAR_SERVICE_PORT:-8081}:8080"
+    networks:
+      - beeatlas-network
+    restart: unless-stopped
+
+networks:
+  beeatlas-network:
+    driver: bridge
+
+volumes:
+  techradar-postgres:

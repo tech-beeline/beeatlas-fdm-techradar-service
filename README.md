@@ -1,92 +1,180 @@
-# techradar-backend
+## beeatlas-fdm-techradar-service
 
+Сервис техрадаров (Tech Radar) — backend‑приложение, которое хранит и предоставляет информацию
+о технологиях и паттернах, используемых в компании: их статусах, секторах, кольцах, историях
+изменений и связанных процессах/продуктах.
 
+### Стек
 
-## Getting started
+- **Язык/платформа**: Java 17, Spring Boot 2.7.x (`TechradarBackendApplication`)
+- **БД**: PostgreSQL (схема `techradar`)
+- **ORM / доступ к данным**: Spring Data JPA
+- **Миграции БД**: Flyway (`src/main/resources/db/migration`)
+- **Документация API**: Swagger / OpenAPI (аннотации `io.swagger.annotations.*`)
+- **Сборка**: Maven
+- **Контейнеризация**: Docker, `Dockerfile`, `docker-compose.yml`
+- **Мониторинг**: Spring Actuator (`/actuator/health`, `/actuator/prometheus`)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Основные возможности
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Управление технологиями (`/api/v1/tech`):
+  - получение списка технологий и детальной информации с историей статусов;
+  - создание, обновление, удаление технологий;
+  - управление версиями технологий;
+  - экспорт данных по технологиям в документ через интеграцию с document‑service.
+- Управление паттернами проектирования (`/api/v1/pattern*`):
+  - просмотр всех паттернов и групп;
+  - CRUD для паттернов и групп паттернов;
+  - получение дерева групп паттернов;
+  - фильтрация паттернов с автоматической проверкой.
+- Управление процессами (`/api/v1/processes`) и связями с технологиями.
+- Интеграции с внешними сервисами:
+  - notification‑service;
+  - document‑service;
+  - products‑service.
 
-## Add your files
+### Запуск через Docker Compose
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+#### Требования
 
+- Установленный **Docker** и **docker-compose**.
+
+#### Переменные окружения
+
+Переменные для БД (см. `docker-compose.yml`):
+
+- **TECHRADAR_POSTGRES_DB** – имя БД (по умолчанию `techradar`);
+- **TECHRADAR_POSTGRES_USER** – пользователь БД (по умолчанию `postgres`);
+- **TECHRADAR_POSTGRES_PASSWORD** – пароль БД (по умолчанию `postgres`);
+- **TECHRADAR_POSTGRES_NODEPORT** – внешний порт Postgres (по умолчанию `5432`);
+- **TECHRADAR_SERVICE_PORT** – внешний порт сервиса (по умолчанию `8081`).
+
+Переменные интеграций (используются в клиентах через `@Value(...)`):
+
+- **INTEGRATION_NOTIFICATION_SERVER_URL** → `integration.notification-server-url`
+- **INTEGRATION_DOCUMENT_SERVER_URL** → `integration.document-server-url`
+- **INTEGRATION_PRODUCTS_SERVER_URL** → `integration.products-server-url`
+
+Пример фрагмента `docker-compose.yml`:
+
+```yaml
+services:
+  techradar-backend:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://techradar-postgres:5432/techradar
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: techradar
+      SPRING_FLYWAY_DEFAULT_SCHEMA: techradar
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_CLEAN_DISABLED: "true"
+      INTEGRATION_NOTIFICATION_SERVER_URL: "http://notification-service"
+      INTEGRATION_DOCUMENT_SERVER_URL: "https://document-service"
+      INTEGRATION_PRODUCTS_SERVER_URL: "https://products-service"
 ```
-cd existing_repo
-git remote add origin https://git.vimpelcom.ru/products/eafdmmart/techradar-backend.git
-git branch -M main
-git push -uf origin main
+
+#### Команды
+
+```bash
+# сборка и запуск контейнеров в фоне
+docker-compose up -d --build
+
+# остановка и удаление контейнеров
+docker-compose down
 ```
 
-## Integrate with your tools
+После запуска backend будет доступен по адресу:
 
-- [ ] [Set up project integrations](https://git.vimpelcom.ru/products/eafdmmart/techradar-backend/-/settings/integrations)
+- `http://localhost:8081` (если не менялся `TECHRADAR_SERVICE_PORT`).
 
-## Collaborate with your team
+### Локальный запуск (без Docker)
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+#### Требования
 
-## Test and Deploy
+- Java 17;
+- Maven;
+- доступный PostgreSQL (БД/схема `techradar`).
 
-Use the built-in continuous integration in GitLab.
+#### Шаги
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+1. Настроить подключение к БД (через `application.properties` или env:
+   `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`).
+2. Flyway‑миграции применятся автоматически при старте приложения.
+3. Собрать и запустить:
 
-***
+```bash
+mvn clean package -DskipTests
+java -jar target/techradar-<version>.jar
+```
 
-# Editing this README
+### Миграции БД
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Миграции находятся в `src/main/resources/db/migration` и автоматически применяются Flyway при
+старте приложения. Ключевые миграции:
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+- **V1__Base_version.sql** – базовые таблицы (`Tech`, `Category`, `Ring`, `Sector`, …);
+- **V2__fill_sector_table.sql** – наполнение справочников `Sector` и `Ring`, создание последовательностей;
+- **V3__Technoradar_patch.sql**, **V4__Technoradar_patch.sql** и др. – донаполнение таблицы `tech` и корректировки;
+- **V5__add_black_lists.sql**, **V6__fill_black_lists.sql**, **V10__migrate_blacklist_to_tech.sql** – работа с black‑list;
+- **V11__recreate_history_tech_and_process.sql** – таблицы `history_tech` и `process` и их связи;
+- **V15–V18** – таблицы паттернов (`pattern`, `pattern_group`, `pattern_tech`) и доп. колонки;
+- **V19__refresh_processes_table.sql** – наполнение таблицы `process` (может зависеть от конкретных `tech_id`).
 
-## Name
-Choose a self-explaining name for your project.
+### Основные REST‑эндпоинты
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Ниже приведены ключевые эндпоинты (не полный список).
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+- **Технологии** (`TechController`, базовый путь `"/api/v1/tech"`):
+  - `GET /api/v1/tech` – список технологий (опционально только актуальные);
+  - `GET /api/v1/tech/{id}` – технология с историей статусов;
+  - `GET /api/v1/tech/by-ids?ids=1&ids=2` – технологии по списку ID;
+  - `POST /api/v1/tech` – создание технологий;
+  - `PATCH /api/v1/tech/{id}` – обновление технологии;
+  - `DELETE /api/v1/tech/{id}` – удаление технологии;
+  - версии технологии:
+    - `POST /api/v1/tech/{tech_id}/version`
+    - `PATCH /api/v1/tech/{tech_id}/version/{id_version}`
+    - `DELETE /api/v1/tech/{tech_id}/version/{version_id}`
+  - `POST /api/v1/tech/export/{doc_id}` – экспорт в документ.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- **Паттерны** (`PatternController`, базовый путь `"/api/v1"`):
+  - `GET /api/v1/patterns` – все паттерны;
+  - `GET /api/v1/patterns/tech/{tech_id}` – паттерны по технологии;
+  - `GET /api/v1/pattern/{id}` – паттерн по id;
+  - `GET /api/v1/patterns/auto-check` – паттерны с авто‑проверкой;
+  - группы паттернов:
+    - `GET /api/v1/pattern/group`
+    - `GET /api/v1/pattern/group/tree`
+    - `POST /api/v1/pattern/group`
+    - `PATCH /api/v1/pattern/group/{id}`
+    - `DELETE /api/v1/pattern/group/{id}`
+  - паттерны:
+    - `POST /api/v1/pattern`
+    - `PATCH /api/v1/pattern/{id}`
+    - `DELETE /api/v1/pattern/{id}`
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+- **Справочники**:
+  - `GET /api/v1/sectors` – сектора;
+  - `GET /api/v1/rings` – кольца;
+  - `GET /api/v1/category` – категории.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+- **Процессы**:
+  - `GET /api/v1/processes` – список процессов.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Health‑checks и мониторинг
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+- `GET /actuator/health` – проверка здоровья приложения;
+- `GET /actuator/prometheus` – метрики Prometheus (если включены).
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Разработка
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+- Основной пакет: `ru.beeline.techradar.*`
+- Доменные сущности: `ru.beeline.techradar.domain.*`
+- Контроллеры: `ru.beeline.techradar.controller.*`
+- Сервисы: `ru.beeline.techradar.service.*`
+- Репозитории: `ru.beeline.techradar.repository.*`
+- DTO/мапперы: `ru.beeline.techradar.dto.*`, `ru.beeline.techradar.maper.*`
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Для локальной разработки можно использовать PostgreSQL из `docker-compose.yml`
+или собственный экземпляр Postgres с той же схемой и миграциями.
