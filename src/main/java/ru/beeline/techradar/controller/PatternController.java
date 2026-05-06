@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,7 @@ import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
 
 @RestController
 @RequestMapping("/api/v1")
+@Tag(name = "Паттерны", description = "Операции чтения и управления паттернами проектирования и их группами.")
 public class PatternController {
 
     private final PatternService patternService;
