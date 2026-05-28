@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.beeline.techradar.annotation.ApiErrorCodes;
 import ru.beeline.techradar.annotation.CustomHeaders;
 import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.exception.ChapterNotFoundException;
@@ -41,6 +42,7 @@ public class PatternController {
     }
 
     @GetMapping("/pattern/by-ids")
+    @ApiErrorCodes({400, 404, 500})
     @Operation(summary = "Получить список паттернов по списку id из query (ids через запятую; дубликаты отбрасываются)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK",
@@ -65,18 +67,21 @@ public class PatternController {
     }
 
     @GetMapping("/patterns")
+    @ApiErrorCodes({500})
     @Operation(summary = "Просмотр всех паттернов проектирования")
     public ResponseEntity<List<PatternDTO>> allPatterns() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatterns());
     }
 
     @GetMapping("/patterns/tech/{tech_id}")
+    @ApiErrorCodes({500})
     @Operation(summary = "Просмотр всех паттернов связанных с технологией")
     public ResponseEntity<List<PatternDTO>> getAllTechnologyPatterns(@PathVariable(name = "tech_id") Integer techId) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllTechnologyPatterns(techId));
     }
 
     @GetMapping("/pattern/{id}")
+    @ApiErrorCodes({500})
     @Operation(summary = "Просмотр паттерна по id ")
     public ResponseEntity<PatternDTO> getPatternId(@Parameter(description = "ID Паттерна")
                                                    @PathVariable(name = "id") Integer id) {
@@ -84,18 +89,21 @@ public class PatternController {
     }
 
     @GetMapping("/patterns/auto-check")
+    @ApiErrorCodes({500})
     @Operation(summary = "Просмотр паттернов принятых в компании, для которых есть правило автоматической проверки")
     public ResponseEntity<List<PatternDTO>> getPatternsAutoCheck() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternsAutoCheck());
     }
 
     @GetMapping("/pattern/group")
+    @ApiErrorCodes({500})
     @Operation(summary = "Просмотр групп паттернов проектирования")
     public ResponseEntity<List<PatternGroupDTO>> getAllPatternsGroup() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getAllPatternsGroup());
     }
 
     @GetMapping("/pattern/group/tree")
+    @ApiErrorCodes({500})
     @Operation(summary = "Просмотр дерева групп паттернов проектирования")
     public ResponseEntity<List<GroupDTO>> getTreePatternsGroup() {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.getTreePatternsGroup());
@@ -103,6 +111,7 @@ public class PatternController {
 
     @CustomHeaders
     @PostMapping("/pattern")
+    @ApiErrorCodes({400, 403, 409, 500})
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Создание паттернов проектирования")
     @ApiResponses(value = {
@@ -178,6 +187,7 @@ public class PatternController {
 
     @CustomHeaders
     @PostMapping("/pattern/group")
+    @ApiErrorCodes({400, 403, 500})
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Создание групп паттернов проектирования")
     @ApiResponses(value = {
@@ -196,6 +206,7 @@ public class PatternController {
 
     @CustomHeaders
     @PatchMapping("/pattern/group/{id}")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(summary = "Редактирование групп паттернов проектирования")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Group updated successfully"),
@@ -212,6 +223,7 @@ public class PatternController {
 
     @CustomHeaders
     @PatchMapping("/pattern/{id}")
+    @ApiErrorCodes({403, 404, 500})
     @Operation(summary = "Обновление паттерна проектирования")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Pattern updated successfully"),
@@ -232,6 +244,7 @@ public class PatternController {
 
     @CustomHeaders
     @DeleteMapping("/pattern/{id}")
+    @ApiErrorCodes({403, 404, 500})
     @Operation(summary = "Удаление паттерна проектирования")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Pattern deleted successfully"),
@@ -246,6 +259,7 @@ public class PatternController {
 
     @CustomHeaders
     @DeleteMapping("/pattern/group/{id}")
+    @ApiErrorCodes({403, 404, 500})
     @Operation(summary = "Удаление групп паттернов проектирования")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Group deleted successfully"),
@@ -260,6 +274,7 @@ public class PatternController {
     }
 
     @PostMapping("/pattern/availability")
+    @ApiErrorCodes({400, 500})
     @Operation(summary = "Проверка доступности паттернов по списку id")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Массив идентификаторов паттернов",
@@ -296,6 +311,7 @@ public class PatternController {
     }
 
     @GetMapping("/pattern/chapter/{id}")
+    @ApiErrorCodes({404, 500})
     @Operation(summary = "Получить паттерны по главе (chapter) из product")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK",

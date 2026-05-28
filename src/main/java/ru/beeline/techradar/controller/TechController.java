@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.beeline.techradar.annotation.ApiErrorCodes;
 import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.service.TechService;
 
@@ -33,6 +34,7 @@ public class TechController {
     }
 
     @GetMapping
+    @ApiErrorCodes({400, 500})
     @Operation(
             operationId = "listTech",
             summary = "Получить список технологий",
@@ -53,6 +55,7 @@ public class TechController {
     }
 
     @GetMapping("/{id}")
+    @ApiErrorCodes({404, 500})
     @Operation(
             operationId = "getTechByIdWithHistory",
             summary = "Получить технологию по ID (с историей статусов)",
@@ -72,6 +75,7 @@ public class TechController {
     }
 
     @GetMapping("/by-ids")
+    @ApiErrorCodes({400, 500})
     @Operation(
             operationId = "getTechByIds",
             summary = "Получить технологии по списку ID",
@@ -90,6 +94,7 @@ public class TechController {
     }
 
     @GetMapping("/subscribed")
+    @ApiErrorCodes({500})
     @Operation(
             operationId = "listSubscribedTech",
             summary = "Получить список подписок на технологии",
@@ -105,6 +110,7 @@ public class TechController {
     }
 
     @GetMapping("/product-tech")
+    @ApiErrorCodes({500})
     @Operation(
             operationId = "listProductTechRelations",
             summary = "Получить связи продукт↔технология",
@@ -120,6 +126,7 @@ public class TechController {
     }
 
     @PostMapping("/product-relation")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(
             operationId = "createProductTechRelation",
             summary = "Создать связь продукт↔технология",
@@ -138,6 +145,7 @@ public class TechController {
     }
 
     @PostMapping
+    @ApiErrorCodes({400, 403, 500})
     @Operation(
             operationId = "createTech",
             summary = "Создать технологии",
@@ -155,6 +163,7 @@ public class TechController {
     }
 
     @PatchMapping("/{id}")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(
             operationId = "updateTech",
             summary = "Обновить технологию",
@@ -168,12 +177,13 @@ public class TechController {
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
     public ResponseEntity<Void> patchTech(@PathVariable Integer id,
-                                    @RequestBody TechDTO tech) {
+                                          @RequestBody TechDTO tech) {
         techService.patchTech(id, tech);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @DeleteMapping("/{id}")
+    @ApiErrorCodes({403, 404, 500})
     @Operation(
             operationId = "deleteTech",
             summary = "Удалить технологию",
@@ -194,6 +204,7 @@ public class TechController {
     }
 
     @DeleteMapping("/{tech_id}/version/{version_id}")
+    @ApiErrorCodes({403, 404, 500})
     @Operation(
             operationId = "deleteTechVersion",
             summary = "Удалить версию технологии",
@@ -216,6 +227,7 @@ public class TechController {
     }
 
     @PostMapping("/{tech_id}/version")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(
             operationId = "createTechVersion",
             summary = "Создать версии технологии",
@@ -229,12 +241,13 @@ public class TechController {
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
     public ResponseEntity<Void> createTechVersion(@RequestBody List<PostTechVersionDTO> postTechVersionDTOS,
-                                            @PathVariable(name = "tech_id") Integer techId) {
+                                                  @PathVariable(name = "tech_id") Integer techId) {
         techService.createTechVersion(postTechVersionDTOS, techId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping("/{tech_id}/version/{id_version}")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(
             operationId = "updateTechVersion",
             summary = "Обновить версию технологии",
@@ -248,13 +261,14 @@ public class TechController {
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
     public ResponseEntity<Void> patchTechVersion(@RequestBody PostTechVersionDTO postTechVersionDTO,
-                                           @PathVariable(name = "tech_id") Integer techId,
-                                           @PathVariable(name = "id_version") Integer idVersion) {
+                                                 @PathVariable(name = "tech_id") Integer techId,
+                                                 @PathVariable(name = "id_version") Integer idVersion) {
         techService.patchTechVersion(postTechVersionDTO, techId, idVersion);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping("/export/{doc_id}")
+    @ApiErrorCodes({500, 503})
     @Operation(
             operationId = "exportTechRadarDocument",
             summary = "Экспорт документа",

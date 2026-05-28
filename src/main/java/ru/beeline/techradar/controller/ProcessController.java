@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.beeline.techradar.annotation.ApiErrorCodes;
 import ru.beeline.techradar.dto.ProcessDTO;
 import ru.beeline.techradar.service.ProcessService;
 
@@ -30,6 +31,7 @@ public class ProcessController {
     }
 
     @GetMapping
+    @ApiErrorCodes({500})
     @Operation(
             operationId = "listProcesses",
             summary = "Получить список процессов",

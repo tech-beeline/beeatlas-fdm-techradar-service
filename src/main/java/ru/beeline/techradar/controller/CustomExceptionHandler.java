@@ -27,7 +27,7 @@ public class CustomExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
-                .body(e.getMessage());
+                .body(new ErrorMessageDTO(e.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -44,19 +44,16 @@ public class CustomExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
-                .body(e.getMessage());
+                .body(new ErrorMessageDTO(e.getMessage()));
     }
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Object> handleException(NotFoundException e) {
         log.error(e.getMessage());
-        ErrorMessageDTO error = ErrorMessageDTO.builder()
-                .errorMessage(e.getMessage())
-                .build();
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
-                .body(error);
+                .body(new ErrorMessageDTO(e.getMessage()));
     }
 
     @ExceptionHandler(ValidationException.class)
@@ -65,7 +62,7 @@ public class CustomExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
-                .body("409 Ошибка валидации тела запроса : " + e.getMessage());
+                .body(new ErrorMessageDTO(e.getMessage()));
     }
 
     @ExceptionHandler(ProductNfrLinkException.class)
