@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.beeline.techradar.annotation.ApiErrorCodes;
 import ru.beeline.techradar.domain.Ring;
 import ru.beeline.techradar.service.RingService;
 
@@ -29,6 +30,7 @@ public class RingController {
     }
 
     @GetMapping
+    @ApiErrorCodes({500})
     @Operation(
             operationId = "listRings",
             summary = "Получить список колец",

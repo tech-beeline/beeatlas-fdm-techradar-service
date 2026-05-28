@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.beeline.techradar.annotation.ApiErrorCodes;
 import ru.beeline.techradar.domain.Category;
 import ru.beeline.techradar.dto.PatchCategoryDTO;
 import ru.beeline.techradar.dto.PostCategoryDTO;
@@ -38,6 +39,7 @@ public class CategoryController {
     }
 
     @PostMapping
+    @ApiErrorCodes({400, 403, 500})
     @Operation(
             operationId = "createCategory",
             summary = "Создать категорию",
@@ -54,6 +56,7 @@ public class CategoryController {
     }
 
     @PutMapping("/join")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(
             operationId = "joinTechToCategory",
             summary = "Связать технологию с категорией",
@@ -71,6 +74,7 @@ public class CategoryController {
     }
 
     @PatchMapping("/{id}")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(
             operationId = "updateCategory",
             summary = "Обновить категорию",
@@ -93,6 +97,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
+    @ApiErrorCodes({400, 403, 404, 500})
     @Operation(
             operationId = "deleteCategory",
             summary = "Удалить категорию",
@@ -114,6 +119,7 @@ public class CategoryController {
     }
 
     @GetMapping
+    @ApiErrorCodes({400, 500})
     @Operation(
             operationId = "listCategories",
             summary = "Получить список категорий",
@@ -130,6 +136,7 @@ public class CategoryController {
 
 
     @GetMapping("/tech")
+    @ApiErrorCodes({400, 500})
     @Operation(
             operationId = "listTechByCategoryIds",
             summary = "Получить технологии по категориям",
