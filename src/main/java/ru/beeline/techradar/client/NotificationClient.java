@@ -13,15 +13,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import ru.beeline.techradar.controller.RequestContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static ru.beeline.techradar.utils.Constant.USER_ID_HEADER;
-import static ru.beeline.techradar.utils.Constant.USER_PERMISSION_HEADER;
-import static ru.beeline.techradar.utils.Constant.USER_PRODUCTS_IDS_HEADER;
-import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
 
 
 @Slf4j
@@ -36,13 +32,10 @@ public class NotificationClient {
         this.restTemplate = restTemplate;
     }
 
-    public List<Integer> getSubscribes(String entityType) {
+    public List<Integer> getSubscribes(String entityType, String userId) {
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.set(USER_ID_HEADER, RequestContext.getUserId());
-            headers.set(USER_PERMISSION_HEADER, RequestContext.getUserPermissions().toString());
-            headers.set(USER_PRODUCTS_IDS_HEADER, RequestContext.getUserProducts().toString());
-            headers.set(USER_ROLES_HEADER, RequestContext.getRoles().toString());
+            headers.set(USER_ID_HEADER, userId);
             HttpEntity<String> entity = new HttpEntity<>(headers);
             String url = notificationServerUrl + "/api/v1/subscribe/" + entityType;
 

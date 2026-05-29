@@ -26,7 +26,6 @@ import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PatternGroupDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
 import ru.beeline.techradar.dto.PostPatternGroupDTO;
-import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.exception.ProductNfrLinkException;
 import ru.beeline.techradar.exception.ValidationException;
@@ -77,15 +76,11 @@ public class PatternService {
         this.objectMapper = objectMapper;
     }
 
-    public IdDTO createPattern(PostPatternDTO patternDTO, String userRoles) {
-        validatePostPatternDTO(patternDTO);
-        validateAdminRole(userRoles);
-        Pattern pattern = createPattern(patternDTO);
-        return creatingPattern(patternDTO, pattern);
-    }
-
     @Transactional
-    public IdDTO creatingPattern(PostPatternDTO patternDTO, Pattern pattern) {
+    public IdDTO creatingPattern(PostPatternDTO patternDTO) {
+        validatePostPatternDTO(patternDTO);
+        Pattern pattern = createPattern(patternDTO);
+
         if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
             if (!productClient.postPatternNfr(pattern.getId(), patternDTO.getNfr(), false)) {
                 patternRepository.delete(pattern);
@@ -146,14 +141,7 @@ public class PatternService {
         }
     }
 
-    private void validateAdminRole(String userRoles) {
-        if (userRoles != null && !userRoles.contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
-    }
-
-    public void deletePattern(Integer id, String userRoles) {
-        validateAdminRole(userRoles);
+    public void deletePattern(Integer id) {
         Pattern pattern = patternRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Not found: Pattern с данным id не найден."));
         if (pattern.getDeleteDate() == null) {
@@ -321,8 +309,7 @@ public class PatternService {
         return result;
     }
 
-    public IdDTO createPatternGroup(PostPatternGroupDTO patternGroupDTO, String userRoles) {
-        validateAdminRole(userRoles);
+    public IdDTO createPatternGroup(PostPatternGroupDTO patternGroupDTO) {
         if (patternGroupDTO.getName() == null || patternGroupDTO.getName().equals("")) {
             throw new IllegalArgumentException("name is empty");
         }
@@ -340,8 +327,7 @@ public class PatternService {
                 .build();
     }
 
-    public void deletePatternGroup(Integer id, String userRoles) {
-        validateAdminRole(userRoles);
+    public void deletePatternGroup(Integer id) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + id + " не найдена"));
         if (patternGroupRepository.countPatternGroupByGroupId(id) > 0) {
@@ -353,8 +339,7 @@ public class PatternService {
         groupRepository.delete(group);
     }
 
-    public void editPatternGroup(Integer id, PostPatternGroupDTO patternGroupDTO, String userRoles) {
-        validateAdminRole(userRoles);
+    public void editPatternGroup(Integer id, PostPatternGroupDTO patternGroupDTO) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + patternGroupDTO.getParentId() + " не найдена"));
         if (patternGroupDTO.getName() != null) {
@@ -412,8 +397,7 @@ public class PatternService {
     }
 
     @Transactional
-    public void editPattern(Integer id, PatchPatternDTO patternDTO, String userRoles) {
-        validateAdminRole(userRoles);
+    public void editPattern(Integer id, PatchPatternDTO patternDTO) {
         Pattern updatePattern = patternRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Паттерн с данным id не найден"));
         boolean hasChanges = updatePattern(patternDTO, updatePattern);

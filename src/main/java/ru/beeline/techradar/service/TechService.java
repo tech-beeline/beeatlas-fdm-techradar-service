@@ -14,12 +14,10 @@ import ru.beeline.techradar.dto.product.GetProductsDTO;
 import ru.beeline.techradar.client.DocumentClient;
 import ru.beeline.techradar.client.NotificationClient;
 import ru.beeline.techradar.client.ProductClient;
-import ru.beeline.techradar.controller.RequestContext;
 import ru.beeline.techradar.domain.Process;
 import ru.beeline.techradar.domain.*;
 import ru.beeline.techradar.dto.*;
 import ru.beeline.techradar.exception.ConflictException;
-import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.maper.HistoryMapper;
 import ru.beeline.techradar.maper.TechHistoryMapper;
@@ -254,8 +252,8 @@ public class TechService {
         return techMapper.toTechDTOList(techList);
     }
 
-    public List<TechSubscribeDTO> getTechSubscribed() {
-        List<Integer> techIds = notificationClient.getSubscribes("TECH");
+    public List<TechSubscribeDTO> getTechSubscribed(String userId) {
+        List<Integer> techIds = notificationClient.getSubscribes("TECH", userId);
         log.info("receive ids from notification server:" + techIds.toString());
         if (techIds.isEmpty()) {
             return new ArrayList<>();
@@ -267,9 +265,6 @@ public class TechService {
     }
 
     public List<IdDTO> addTech(List<PostTechDTO> techDTOs) throws JsonProcessingException {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         validatePostTechDTOFields(techDTOs);
         List<String> labels = techDTOs.stream().map(PostTechDTO::getLabel).collect(Collectors.toList());
         List<Tech> existTechList = techRepository.findAllByLabelIn(labels);
@@ -316,9 +311,6 @@ public class TechService {
     }
 
     public void patchTech(Integer id, TechDTO techDTO) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         validateTechDTOFields(techDTO);
         List<Tech> existingTechs = techRepository.findAllByLabelIn(Collections.singletonList(techDTO.getLabel()));
         for (Tech existingTech : existingTechs) {
@@ -383,9 +375,6 @@ public class TechService {
     }
 
     public void deleteTech(Integer id) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         Tech tech = techRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tech with id=" + id + " not found."));
         tech.setDeletedDate(LocalDateTime.now());
@@ -440,9 +429,6 @@ public class TechService {
     }
 
     public void deleteTechVersion(Integer techId, Integer versionId) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         TechVersion techVersion = techVersionRepository.findByTechIdAndIdAndDeletedDateIsNull(techId, versionId);
         if (techVersion != null) {
             techVersion.setDeletedDate(LocalDateTime.now());
@@ -451,9 +437,6 @@ public class TechService {
     }
 
     public void createTechVersion(List<PostTechVersionDTO> postTechVersionDTOS, Integer techId) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         techRepository.findById(techId)
                 .orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
         List<TechVersion> result = new ArrayList<>();
@@ -559,9 +542,6 @@ public class TechService {
     }
 
     public void patchTechVersion(PostTechVersionDTO postTechVersionDTO, Integer techId, Integer idVersion) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         techRepository.findById(techId)
                 .orElseThrow(() -> new NotFoundException("Not found: Tech с данным id не найден."));
         TechVersion currentVersion = techVersionRepository.findById(idVersion)

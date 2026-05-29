@@ -6,14 +6,12 @@ package ru.beeline.techradar.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.beeline.techradar.controller.RequestContext;
 import ru.beeline.techradar.domain.Category;
 import ru.beeline.techradar.domain.Tech;
 import ru.beeline.techradar.domain.TechCategory;
 import ru.beeline.techradar.dto.PatchCategoryDTO;
 import ru.beeline.techradar.dto.PostCategoryDTO;
 import ru.beeline.techradar.dto.PutTechCategoryDTO;
-import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.repository.CategoryRepository;
 import ru.beeline.techradar.repository.TechCategoryRepository;
 
@@ -40,17 +38,11 @@ public class CategoryService {
     }
 
     public Category addCategory(PostCategoryDTO category) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         return categoryRepository.findByName(category.getName())
                 .orElseGet(() -> categoryRepository.save(Category.builder().name(category.getName()).build()));
     }
 
     public void putCategory(PutTechCategoryDTO category) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         Category savedEntity = categoryRepository.findByName(category.getJoinCategoryName())
                 .orElseGet(() -> categoryRepository.save(Category.builder().name(category.getJoinCategoryName()).build()));
         List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(category.getJoinedCategoriesId());
@@ -65,9 +57,6 @@ public class CategoryService {
     }
 
     public void patchCategory(String id, PatchCategoryDTO category) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         Category entity = categoryRepository.findById(Integer.parseInt(id))
                 .orElseThrow(() -> new IllegalArgumentException("Category with id=" + id + " not found."));
         entity.setName(category.getName());
@@ -75,9 +64,6 @@ public class CategoryService {
     }
 
     public void deleteCategory(String id) {
-        if (!RequestContext.getRoles().contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
         List<TechCategory> techCategories = techCategoryRepository.findByCategory_IdIn(new ArrayList<>(Integer.parseInt(id)));
         if (techCategories == null || techCategories.isEmpty()) ;
         {
