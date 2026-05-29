@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ru.beeline.techradar.utils.Constant.USER_ROLES_HEADER;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -179,9 +178,8 @@ public class PatternController {
                     )
             )
     })
-    public ResponseEntity<IdDTO> createPattern(@RequestBody PostPatternDTO patternDTO,
-                                               @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(patternService.createPattern(patternDTO, userRoles));
+    public ResponseEntity<IdDTO> createPattern(@RequestBody PostPatternDTO patternDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(patternService.creatingPattern(patternDTO));
     }
 
 
@@ -197,11 +195,9 @@ public class PatternController {
             @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<IdDTO> createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO,
-                                                    @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-
+    public ResponseEntity<IdDTO> createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(patternService.createPatternGroup(patternGroupDTO, userRoles));
+                .body(patternService.createPatternGroup(patternGroupDTO));
     }
 
     @CustomHeaders
@@ -215,9 +211,8 @@ public class PatternController {
             @ApiResponse(responseCode = "404", description = "Group not found")
     })
     public ResponseEntity<Void> editPatternGroup(@PathVariable Integer id,
-                                                 @RequestBody PostPatternGroupDTO patternGroupDTO,
-                                                 @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        patternService.editPatternGroup(id, patternGroupDTO, userRoles);
+                                                 @RequestBody PostPatternGroupDTO patternGroupDTO) {
+        patternService.editPatternGroup(id, patternGroupDTO);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -236,9 +231,8 @@ public class PatternController {
     })
     public ResponseEntity<Void> editPattern(@Parameter(description = "ID Паттерна")
                                             @PathVariable Integer id,
-                                            @RequestBody PatchPatternDTO patternDTO,
-                                            @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        patternService.editPattern(id, patternDTO, userRoles);
+                                            @RequestBody PatchPatternDTO patternDTO) {
+        patternService.editPattern(id, patternDTO);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -251,9 +245,8 @@ public class PatternController {
             @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Pattern not found"),
     })
-    public ResponseEntity<Void> deletePattern(@PathVariable Integer id,
-                                              @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        patternService.deletePattern(id, userRoles);
+    public ResponseEntity<Void> deletePattern(@PathVariable Integer id) {
+        patternService.deletePattern(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -267,9 +260,8 @@ public class PatternController {
             @ApiResponse(responseCode = "404", description = "Group not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Void> deletePatternGroup(@PathVariable Integer id,
-                                                   @RequestHeader(value = USER_ROLES_HEADER, required = false) String userRoles) {
-        patternService.deletePatternGroup(id, userRoles);
+    public ResponseEntity<Void> deletePatternGroup(@PathVariable Integer id) {
+        patternService.deletePatternGroup(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 

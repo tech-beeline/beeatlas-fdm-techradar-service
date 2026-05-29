@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.beeline.techradar.annotation.ApiErrorCodes;
 import ru.beeline.techradar.dto.*;
+
+import static ru.beeline.techradar.utils.Constant.USER_ID_HEADER;
 import ru.beeline.techradar.service.TechService;
 
 import javax.validation.Valid;
@@ -105,8 +107,9 @@ public class TechController {
                     content = @Content(schema = @Schema(implementation = TechSubscribeDTO.class))),
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
-    public List<TechSubscribeDTO> getSubscribed() {
-        return techService.getTechSubscribed();
+    public List<TechSubscribeDTO> getSubscribed(
+            @RequestHeader(value = USER_ID_HEADER) String userId) {
+        return techService.getTechSubscribed(userId);
     }
 
     @GetMapping("/product-tech")
