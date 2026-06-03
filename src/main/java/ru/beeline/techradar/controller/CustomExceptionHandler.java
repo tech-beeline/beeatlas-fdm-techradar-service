@@ -62,7 +62,7 @@ public class CustomExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
-                .body(new ErrorMessageDTO(e.getMessage()));
+                .body("409 Ошибка валидации тела запроса : " + new ErrorMessageDTO(e.getMessage()));
     }
 
     @ExceptionHandler(ProductNfrLinkException.class)
