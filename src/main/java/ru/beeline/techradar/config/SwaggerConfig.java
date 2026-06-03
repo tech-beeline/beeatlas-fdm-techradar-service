@@ -22,23 +22,23 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                              .title("Techradar API")
-                              .version("1.0")
-                              .description("API документация")
-                              .contact(new Contact()
-                                               .name("Example")
-                                               .url("https://www.example.com")
-                                               .email("example@company.com"))
+                        .title("Techradar API")
+                        .version("1.0")
+                        .description("API документация")
+                        .contact(new Contact()
+                                .name("Example")
+                                .url("https://www.example.com")
+                                .email("example@company.com"))
                 )
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
-                                    .addSecuritySchemes(securitySchemeName,
-                                                        new SecurityScheme()
-                                                                .name(securitySchemeName)
-                                                                .type(SecurityScheme.Type.HTTP)
-                                                                .scheme("bearer")
-                                                                .bearerFormat("JWT")
-                                    )
+                        .addSecuritySchemes(securitySchemeName,
+                                new SecurityScheme()
+                                        .name(securitySchemeName)
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                        )
                 );
     }
 }
