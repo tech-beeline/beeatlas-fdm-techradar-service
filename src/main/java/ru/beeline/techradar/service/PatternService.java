@@ -131,10 +131,10 @@ public class PatternService {
     private void validatePostPatternDTO(PostPatternDTO patternDTO) {
         StringBuilder errMsg = new StringBuilder();
         if (patternDTO.getName() == null || patternDTO.getName().equals("")) {
-            errMsg.append("Отсутствует обязательное поле name");
+            errMsg.append("409 Ошибка валидации тела запроса: Отсутствует обязательное поле name");
         }
         if (patternDTO.getGroups() == null) {
-            errMsg.append("Отсутствует обязательный список groups");
+            errMsg.append("409 Ошибка валидации тела запроса: Отсутствует обязательный список groups");
         }
         if (!errMsg.toString().isEmpty()) {
             throw new ValidationException(errMsg.toString());

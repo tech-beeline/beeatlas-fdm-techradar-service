@@ -43,16 +43,6 @@ public class PatternController {
     @GetMapping("/pattern/by-ids")
     @ApiErrorCodes({400, 404, 500})
     @Operation(summary = "Получить список паттернов по списку id из query (ids через запятую; дубликаты отбрасываются)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PatternByIdsItemDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Bad request",
-                    content = @Content(schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = @ExampleObject(value = "{\"errorMessage\": \"Массив идентификаторов не передан или пустой\"}"))),
-            @ApiResponse(responseCode = "404", description = "Not found",
-                    content = @Content(schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = @ExampleObject(value = "{\"errorMessage\": \"Не для каждого идентификатора существует паттерн\"}")))
-    })
     public ResponseEntity<?> getPatternsByIds(
             @Parameter(description = "Идентификаторы паттернов через запятую, обязательный, не пустой", example = "1,2,3")
             @RequestParam(name = "ids", required = false) String ids) {
@@ -113,71 +103,6 @@ public class PatternController {
     @ApiErrorCodes({400, 403, 409, 500})
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Создание паттернов проектирования")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Паттерн успешно создан",
-                    content = @Content(schema = @Schema(implementation = IdDTO.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Некорректное тело запроса",
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Несуществующие технологии",
-                                            summary = "Указаны несуществующие технологии",
-                                            value = "{\"errorMessage\": \"Указаны несуществующие технологии\"}"
-                                    ),
-                                    @ExampleObject(
-                                            name = "Несуществующие категории",
-                                            summary = "Указаны несуществующие категории",
-                                            value = "{\"errorMessage\": \"Указаны несуществующие категории\"}"
-                                    )
-                            }
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Forbidden — недостаточно прав для выполнения операции",
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = @ExampleObject(
-                                    value = "{\"errorMessage\": \"Forbidden\"}"
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Конфликт — отсутствуют обязательные поля",
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Отсутствует name",
-                                            summary = "Отсутствует обязательное поле name",
-                                            value = "{\"errorMessage\": \"Отсутствует обязательное поле name\"}"
-                                    ),
-                                    @ExampleObject(
-                                            name = "Отсутствует groups",
-                                            summary = "Отсутствует обязательный список groups",
-                                            value = "{\"errorMessage\": \"Отсутствует обязательный список groups\"}"
-                                    )
-                            }
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Не все переданные идентификаторы соответствуют существующим требованиям",
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = @ExampleObject(
-                                    value = "{\"errorMessage\": \"Не все переданные идентификаторы соответствуют существующим требованиям\"}"
-                            )
-                    )
-            )
-    })
     public ResponseEntity<IdDTO> createPattern(@RequestBody PostPatternDTO patternDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(patternService.creatingPattern(patternDTO));
     }
@@ -188,13 +113,6 @@ public class PatternController {
     @ApiErrorCodes({400, 403, 500})
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Создание групп паттернов проектирования")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Group created successfully",
-                    content = @Content(schema = @Schema(implementation = IdDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Bad request – invalid data"),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
     public ResponseEntity<IdDTO> createPatternGroup(@RequestBody PostPatternGroupDTO patternGroupDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(patternService.createPatternGroup(patternGroupDTO));
@@ -204,12 +122,6 @@ public class PatternController {
     @PatchMapping("/pattern/group/{id}")
     @ApiErrorCodes({400, 403, 404, 500})
     @Operation(summary = "Редактирование групп паттернов проектирования")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Group updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Bad request – invalid data"),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Group not found")
-    })
     public ResponseEntity<Void> editPatternGroup(@PathVariable Integer id,
                                                  @RequestBody PostPatternGroupDTO patternGroupDTO) {
         patternService.editPatternGroup(id, patternGroupDTO);
@@ -220,15 +132,6 @@ public class PatternController {
     @PatchMapping("/pattern/{id}")
     @ApiErrorCodes({403, 404, 500})
     @Operation(summary = "Обновление паттерна проектирования")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Pattern updated successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Pattern not found"),
-            @ApiResponse(responseCode = "500", description = "Ошибка вызова product при связи NFR",
-                    content = @Content(schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = @ExampleObject(
-                                    value = "{\"errorMessage\": \"Ошибка при обращении к product сервису, паттерн не создан\"}"))),
-    })
     public ResponseEntity<Void> editPattern(@Parameter(description = "ID Паттерна")
                                             @PathVariable Integer id,
                                             @RequestBody PatchPatternDTO patternDTO) {
@@ -240,11 +143,6 @@ public class PatternController {
     @DeleteMapping("/pattern/{id}")
     @ApiErrorCodes({403, 404, 500})
     @Operation(summary = "Удаление паттерна проектирования")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Pattern deleted successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Pattern not found"),
-    })
     public ResponseEntity<Void> deletePattern(@PathVariable Integer id) {
         patternService.deletePattern(id);
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -254,12 +152,6 @@ public class PatternController {
     @DeleteMapping("/pattern/group/{id}")
     @ApiErrorCodes({403, 404, 500})
     @Operation(summary = "Удаление групп паттернов проектирования")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Group deleted successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Group not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
     public ResponseEntity<Void> deletePatternGroup(@PathVariable Integer id) {
         patternService.deletePatternGroup(id);
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -268,36 +160,6 @@ public class PatternController {
     @PostMapping("/pattern/availability")
     @ApiErrorCodes({400, 500})
     @Operation(summary = "Проверка доступности паттернов по списку id")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "Массив идентификаторов паттернов",
-            required = true,
-            content = @Content(
-                    mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = Integer.class))))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(schema = @Schema(implementation = AvailabilityDTO.class))),
-            @ApiResponse(responseCode = "400",
-                    description =
-                            "Некорректное тело запроса\n \n"
-                                    + "Не передан массив идентификаторов паттернов или передан пустой\n"
-                                    ,
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorMessageDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Некорректное тело запроса",
-                                            summary = "Некорректное тело запроса",
-                                            value = "{\"message\":\"Некорректное тело запроса\"}"
-                                    ),
-                                    @ExampleObject(
-                                            name = "Не передан массив идентификаторов паттернов или передан пустой",
-                                            summary = "Не передан массив идентификаторов паттернов или передан пустой",
-                                            value = "{\"message\":\"Не передан массив идентификаторов паттернов или передан пустой\"}"
-                                    )
-                            }
-                    )),
-    })
     public ResponseEntity<AvailabilityDTO> patternAvailability(@RequestBody(required = false) String body) {
         return ResponseEntity.status(HttpStatus.OK).body(patternService.patternAvailabilityFromRequest(body));
     }
@@ -305,14 +167,6 @@ public class PatternController {
     @GetMapping("/pattern/chapter/{id}")
     @ApiErrorCodes({404, 500})
     @Operation(summary = "Получить паттерны по главе (chapter) из product")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ChapterPatternDTO.class)))),
-            @ApiResponse(responseCode = "404", description = "Chapter not found",
-                    content = @Content(schema = @Schema(implementation = ErrorMessageDTO.class))),
-            @ApiResponse(responseCode = "500", description = "Product service unavailable",
-                    content = @Content(schema = @Schema(implementation = ErrorMessageDTO.class)))
-    })
     public ResponseEntity<?> getPatternsByChapter(@PathVariable(name = "id") Integer chapterId) {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(patternService.getPatternsByChapter(chapterId));
@@ -347,5 +201,4 @@ public class PatternController {
         }
         return unique.stream().collect(Collectors.toList());
     }
-
 }
