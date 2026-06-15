@@ -115,7 +115,7 @@ public class PatternService {
 
         if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
             if (!productClient.postPatternNfr(pattern.getId(), patternDTO.getNfr(), false)) {
-                patternRepository.delete(pattern);
+                patternRepository.deleteById(pattern.getId());
                 throw new ProductNfrLinkException();
             }
         }
