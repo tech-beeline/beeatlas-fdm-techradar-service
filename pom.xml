@@ -10,7 +10,7 @@
     </parent>
     <groupId>ru.beeline</groupId>
     <artifactId>techradar-backend</artifactId>
-    <version>1.3.0</version>
+    <version>1.3.2</version>
     <name>techradar</name>
     <description>techradar-backend</description>
     <properties>
@@ -136,7 +136,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.6.14</version>
+            <version>1.8.0</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>

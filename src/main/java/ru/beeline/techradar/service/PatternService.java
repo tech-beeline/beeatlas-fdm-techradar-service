@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.beeline.techradar.client.ProductClient;
 import ru.beeline.techradar.domain.Group;
 import ru.beeline.techradar.domain.Pattern;
@@ -26,7 +28,6 @@ import ru.beeline.techradar.dto.PatternDTO;
 import ru.beeline.techradar.dto.PatternGroupDTO;
 import ru.beeline.techradar.dto.PostPatternDTO;
 import ru.beeline.techradar.dto.PostPatternGroupDTO;
-import ru.beeline.techradar.exception.ForbiddenException;
 import ru.beeline.techradar.exception.NotFoundException;
 import ru.beeline.techradar.exception.ProductNfrLinkException;
 import ru.beeline.techradar.exception.ValidationException;
@@ -59,6 +60,8 @@ public class PatternService {
 
     private final ObjectMapper objectMapper;
 
+    private final TransactionTemplate transactionTemplate;
+
     public PatternService(PatternMapper patternMapper,
                           TechRepository techRepository,
                           PatternRepository patternRepository,
@@ -66,7 +69,8 @@ public class PatternService {
                           PatternGroupRepository patternGroupRepository,
                           GroupRepository groupRepository,
                           ProductClient productClient,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          PlatformTransactionManager transactionManager) {
         this.patternMapper = patternMapper;
         this.techRepository = techRepository;
         this.patternRepository = patternRepository;
@@ -74,45 +78,48 @@ public class PatternService {
         this.groupRepository = groupRepository;
         this.patternGroupRepository = patternGroupRepository;
         this.productClient = productClient;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.objectMapper = objectMapper;
     }
 
-    public IdDTO createPattern(PostPatternDTO patternDTO, String userRoles) {
+    public IdDTO creatingPattern(PostPatternDTO patternDTO) {
         validatePostPatternDTO(patternDTO);
-        validateAdminRole(userRoles);
-        Pattern pattern = createPattern(patternDTO);
-        return creatingPattern(patternDTO, pattern);
-    }
 
-    @Transactional
-    public IdDTO creatingPattern(PostPatternDTO patternDTO, Pattern pattern) {
+        Pattern pattern = transactionTemplate.execute(status -> {
+            Pattern p = createPattern(patternDTO);
+
+            if (patternDTO.getRelationsTech() != null && !patternDTO.getRelationsTech().isEmpty()) {
+                Set<Integer> techIds = new HashSet<>(patternDTO.getRelationsTech());
+                List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(techIds);
+                if (techIds.size() != techList.size()) {
+                    throw new IllegalArgumentException("Указаны несуществующие технологии");
+                }
+                List<PatternTech> links = techList.stream()
+                        .map(tech -> PatternTech.builder().pattern(p).tech(tech).build())
+                        .collect(Collectors.toList());
+                patternTechRepository.saveAll(links);
+            }
+            if (patternDTO.getGroups() != null && !patternDTO.getGroups().isEmpty()) {
+                Set<Integer> groupsSet = new HashSet<>(patternDTO.getGroups());
+                List<Group> groups = groupRepository.findAllById(new ArrayList<>(groupsSet));
+                if (groupsSet.size() != groups.size()) {
+                    throw new IllegalArgumentException("Указаны несуществующие категории");
+                }
+                List<PatternGroup> patternGroups = groups.stream()
+                        .map(group -> PatternGroup.builder().pattern(p).group(group).build())
+                        .toList();
+                patternGroupRepository.saveAll(patternGroups);
+            }
+            return p;
+        });
+
         if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
             if (!productClient.postPatternNfr(pattern.getId(), patternDTO.getNfr(), false)) {
                 patternRepository.delete(pattern);
                 throw new ProductNfrLinkException();
             }
         }
-        if (patternDTO.getRelationsTech() != null && !patternDTO.getRelationsTech().isEmpty()) {
-            Set<Integer> techIds = new HashSet<>(patternDTO.getRelationsTech());
-            List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(techIds);
-            if (techIds.size() != techList.size()) {
-                throw new IllegalArgumentException("Указаны несуществующие технологии");
-            }
-            List<PatternTech> links = techList.stream()
-                    .map(tech -> PatternTech.builder().pattern(pattern).tech(tech).build())
-                    .collect(Collectors.toList());
-            patternTechRepository.saveAll(links);
-        }
-        if (patternDTO.getGroups() != null && !patternDTO.getGroups().isEmpty()) {
-            Set<Integer> groupsSet = new HashSet<>(patternDTO.getGroups());
-            List<Group> groups = groupRepository.findAllById(new ArrayList<>(groupsSet));
-            if (groupsSet.size() != groups.size()) {
-                throw new IllegalArgumentException("Указаны несуществующие категории");
-            }
-            List<PatternGroup> patternGroups = groups.stream().map(group -> PatternGroup.builder().pattern(pattern)
-                    .group(group).build()).toList();
-            patternGroupRepository.saveAll(patternGroups);
-        }
+
         return new IdDTO(pattern.getId());
     }
 
@@ -136,24 +143,17 @@ public class PatternService {
     private void validatePostPatternDTO(PostPatternDTO patternDTO) {
         StringBuilder errMsg = new StringBuilder();
         if (patternDTO.getName() == null || patternDTO.getName().equals("")) {
-            errMsg.append("Отсутствует обязательное поле name");
+            errMsg.append("409 Ошибка валидации тела запроса: Отсутствует обязательное поле name");
         }
         if (patternDTO.getGroups() == null) {
-            errMsg.append("Отсутствует обязательный список groups");
+            errMsg.append("409 Ошибка валидации тела запроса: Отсутствует обязательный список groups");
         }
         if (!errMsg.toString().isEmpty()) {
             throw new ValidationException(errMsg.toString());
         }
     }
 
-    private void validateAdminRole(String userRoles) {
-        if (userRoles != null && !userRoles.contains("ADMINISTRATOR")) {
-            throw new ForbiddenException("403 Forbidden.");
-        }
-    }
-
-    public void deletePattern(Integer id, String userRoles) {
-        validateAdminRole(userRoles);
+    public void deletePattern(Integer id) {
         Pattern pattern = patternRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Not found: Pattern с данным id не найден."));
         if (pattern.getDeleteDate() == null) {
@@ -321,8 +321,7 @@ public class PatternService {
         return result;
     }
 
-    public IdDTO createPatternGroup(PostPatternGroupDTO patternGroupDTO, String userRoles) {
-        validateAdminRole(userRoles);
+    public IdDTO createPatternGroup(PostPatternGroupDTO patternGroupDTO) {
         if (patternGroupDTO.getName() == null || patternGroupDTO.getName().equals("")) {
             throw new IllegalArgumentException("name is empty");
         }
@@ -340,8 +339,7 @@ public class PatternService {
                 .build();
     }
 
-    public void deletePatternGroup(Integer id, String userRoles) {
-        validateAdminRole(userRoles);
+    public void deletePatternGroup(Integer id) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + id + " не найдена"));
         if (patternGroupRepository.countPatternGroupByGroupId(id) > 0) {
@@ -353,8 +351,7 @@ public class PatternService {
         groupRepository.delete(group);
     }
 
-    public void editPatternGroup(Integer id, PostPatternGroupDTO patternGroupDTO, String userRoles) {
-        validateAdminRole(userRoles);
+    public void editPatternGroup(Integer id, PostPatternGroupDTO patternGroupDTO) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Группа с идентификатором " + patternGroupDTO.getParentId() + " не найдена"));
         if (patternGroupDTO.getName() != null) {
@@ -412,8 +409,7 @@ public class PatternService {
     }
 
     @Transactional
-    public void editPattern(Integer id, PatchPatternDTO patternDTO, String userRoles) {
-        validateAdminRole(userRoles);
+    public void editPattern(Integer id, PatchPatternDTO patternDTO) {
         Pattern updatePattern = patternRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Паттерн с данным id не найден"));
         boolean hasChanges = updatePattern(patternDTO, updatePattern);
