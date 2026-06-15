@@ -132,7 +132,7 @@ public class ProductClient {
                     entity,
                     Void.class
             );
-            return response.getStatusCode() == HttpStatus.OK;
+            return response.getStatusCode().is2xxSuccessful();
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             log.error("Product NFR link failed for pattern {}: {}", patternId, e.getMessage());
             return false;

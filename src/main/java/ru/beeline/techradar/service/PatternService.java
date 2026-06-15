@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.beeline.techradar.client.ProductClient;
 import ru.beeline.techradar.domain.Group;
 import ru.beeline.techradar.domain.Pattern;
@@ -58,6 +60,8 @@ public class PatternService {
 
     private final ObjectMapper objectMapper;
 
+    private final TransactionTemplate transactionTemplate;
+
     public PatternService(PatternMapper patternMapper,
                           TechRepository techRepository,
                           PatternRepository patternRepository,
@@ -65,7 +69,8 @@ public class PatternService {
                           PatternGroupRepository patternGroupRepository,
                           GroupRepository groupRepository,
                           ProductClient productClient,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          PlatformTransactionManager transactionManager) {
         this.patternMapper = patternMapper;
         this.techRepository = techRepository;
         this.patternRepository = patternRepository;
@@ -73,13 +78,40 @@ public class PatternService {
         this.groupRepository = groupRepository;
         this.patternGroupRepository = patternGroupRepository;
         this.productClient = productClient;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.objectMapper = objectMapper;
     }
 
-    @Transactional
     public IdDTO creatingPattern(PostPatternDTO patternDTO) {
         validatePostPatternDTO(patternDTO);
-        Pattern pattern = createPattern(patternDTO);
+
+        Pattern pattern = transactionTemplate.execute(status -> {
+            Pattern p = createPattern(patternDTO);
+
+            if (patternDTO.getRelationsTech() != null && !patternDTO.getRelationsTech().isEmpty()) {
+                Set<Integer> techIds = new HashSet<>(patternDTO.getRelationsTech());
+                List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(techIds);
+                if (techIds.size() != techList.size()) {
+                    throw new IllegalArgumentException("Указаны несуществующие технологии");
+                }
+                List<PatternTech> links = techList.stream()
+                        .map(tech -> PatternTech.builder().pattern(p).tech(tech).build())
+                        .collect(Collectors.toList());
+                patternTechRepository.saveAll(links);
+            }
+            if (patternDTO.getGroups() != null && !patternDTO.getGroups().isEmpty()) {
+                Set<Integer> groupsSet = new HashSet<>(patternDTO.getGroups());
+                List<Group> groups = groupRepository.findAllById(new ArrayList<>(groupsSet));
+                if (groupsSet.size() != groups.size()) {
+                    throw new IllegalArgumentException("Указаны несуществующие категории");
+                }
+                List<PatternGroup> patternGroups = groups.stream()
+                        .map(group -> PatternGroup.builder().pattern(p).group(group).build())
+                        .toList();
+                patternGroupRepository.saveAll(patternGroups);
+            }
+            return p;
+        });
 
         if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
             if (!productClient.postPatternNfr(pattern.getId(), patternDTO.getNfr(), false)) {
@@ -87,27 +119,7 @@ public class PatternService {
                 throw new ProductNfrLinkException();
             }
         }
-        if (patternDTO.getRelationsTech() != null && !patternDTO.getRelationsTech().isEmpty()) {
-            Set<Integer> techIds = new HashSet<>(patternDTO.getRelationsTech());
-            List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(techIds);
-            if (techIds.size() != techList.size()) {
-                throw new IllegalArgumentException("Указаны несуществующие технологии");
-            }
-            List<PatternTech> links = techList.stream()
-                    .map(tech -> PatternTech.builder().pattern(pattern).tech(tech).build())
-                    .collect(Collectors.toList());
-            patternTechRepository.saveAll(links);
-        }
-        if (patternDTO.getGroups() != null && !patternDTO.getGroups().isEmpty()) {
-            Set<Integer> groupsSet = new HashSet<>(patternDTO.getGroups());
-            List<Group> groups = groupRepository.findAllById(new ArrayList<>(groupsSet));
-            if (groupsSet.size() != groups.size()) {
-                throw new IllegalArgumentException("Указаны несуществующие категории");
-            }
-            List<PatternGroup> patternGroups = groups.stream().map(group -> PatternGroup.builder().pattern(pattern)
-                    .group(group).build()).toList();
-            patternGroupRepository.saveAll(patternGroups);
-        }
+
         return new IdDTO(pattern.getId());
     }
 
