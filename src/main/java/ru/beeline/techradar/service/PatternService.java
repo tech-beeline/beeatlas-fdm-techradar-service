@@ -115,7 +115,12 @@ public class PatternService {
 
         if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
             if (!productClient.postPatternNfr(pattern.getId(), patternDTO.getNfr(), false)) {
-                patternRepository.deleteById(pattern.getId());
+                try {
+                    patternRepository.deleteById(pattern.getId());
+                } catch (Exception e) {
+                    log.error("Не удалось удалить паттерн {} после неуспешной привязки НФТ: {}",
+                            pattern.getId(), e.getMessage());
+                }
                 throw new ProductNfrLinkException();
             }
         }
