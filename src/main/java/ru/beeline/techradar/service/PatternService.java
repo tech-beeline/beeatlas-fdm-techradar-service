@@ -110,20 +110,14 @@ public class PatternService {
                         .toList();
                 patternGroupRepository.saveAll(patternGroups);
             }
+
+            if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
+                if (!productClient.postPatternNfr(p.getId(), patternDTO.getNfr(), false)) {
+                    throw new ProductNfrLinkException();
+                }
+            }
             return p;
         });
-
-        if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
-            if (!productClient.postPatternNfr(pattern.getId(), patternDTO.getNfr(), false)) {
-                try {
-                    patternRepository.deleteById(pattern.getId());
-                } catch (Exception e) {
-                    log.error("Не удалось удалить паттерн {} после неуспешной привязки НФТ: {}",
-                            pattern.getId(), e.getMessage());
-                }
-                throw new ProductNfrLinkException();
-            }
-        }
 
         return new IdDTO(pattern.getId());
     }
