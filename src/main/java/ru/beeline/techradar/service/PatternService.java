@@ -85,39 +85,42 @@ public class PatternService {
     public IdDTO creatingPattern(PostPatternDTO patternDTO) {
         validatePostPatternDTO(patternDTO);
 
-        Pattern pattern = transactionTemplate.execute(status -> {
-            Pattern p = createPattern(patternDTO);
-
+            Pattern pattern = createPattern(patternDTO);
+            List<PatternTech> links = new ArrayList<>();
             if (patternDTO.getRelationsTech() != null && !patternDTO.getRelationsTech().isEmpty()) {
                 Set<Integer> techIds = new HashSet<>(patternDTO.getRelationsTech());
                 List<Tech> techList = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(techIds);
                 if (techIds.size() != techList.size()) {
                     throw new IllegalArgumentException("Указаны несуществующие технологии");
                 }
-                List<PatternTech> links = techList.stream()
-                        .map(tech -> PatternTech.builder().pattern(p).tech(tech).build())
+                links = techList.stream()
+                        .map(tech -> PatternTech.builder().pattern(pattern).tech(tech).build())
                         .collect(Collectors.toList());
                 patternTechRepository.saveAll(links);
             }
+            List<PatternGroup> patternGroups = new ArrayList<>();
             if (patternDTO.getGroups() != null && !patternDTO.getGroups().isEmpty()) {
                 Set<Integer> groupsSet = new HashSet<>(patternDTO.getGroups());
                 List<Group> groups = groupRepository.findAllById(new ArrayList<>(groupsSet));
                 if (groupsSet.size() != groups.size()) {
                     throw new IllegalArgumentException("Указаны несуществующие категории");
                 }
-                List<PatternGroup> patternGroups = groups.stream()
-                        .map(group -> PatternGroup.builder().pattern(p).group(group).build())
+                patternGroups = groups.stream()
+                        .map(group -> PatternGroup.builder().pattern(pattern).group(group).build())
                         .toList();
                 patternGroupRepository.saveAll(patternGroups);
             }
 
             if (patternDTO.getNfr() != null && !patternDTO.getNfr().isEmpty()) {
-                if (!productClient.postPatternNfr(p.getId(), patternDTO.getNfr(), false)) {
+                if (!productClient.postPatternNfr(pattern.getId(), patternDTO.getNfr(), false)) {
+                    if(!patternGroups.isEmpty())
+                        patternGroupRepository.deleteAll(patternGroups);
+                    if(!links.isEmpty())
+                        patternTechRepository.deleteAll(links);
+                    patternRepository.delete(pattern);
                     throw new ProductNfrLinkException();
                 }
             }
-            return p;
-        });
 
         return new IdDTO(pattern.getId());
     }
