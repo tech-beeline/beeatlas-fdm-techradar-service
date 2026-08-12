@@ -199,7 +199,11 @@ public class TechService {
     }
 
     public void createRelations(PostProductTechDTO tech) {
-        Tech techFromDb = techRepository.findByLabelIgnoreCase(tech.getProjLang());
+        List<Tech> matchingTechs = techRepository.findAllByLabelIgnoreCase(tech.getProjLang());
+        Tech techFromDb = matchingTechs.stream()
+                .filter(t -> t.getDeletedDate() == null)
+                .findFirst()
+                .orElse(matchingTechs.stream().findFirst().orElse(null));
         Integer id;
         if (techFromDb != null) {
             id = techFromDb.getId();
