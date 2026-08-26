@@ -73,4 +73,13 @@ public class CustomExceptionHandler {
                 .header("content-type", MediaType.APPLICATION_JSON_VALUE)
                 .body(ErrorMessageDTO.builder().errorMessage(e.getMessage()).build());
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleException(Exception e) {
+        log.error("Unhandled exception", e);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .header("content-type", MediaType.APPLICATION_JSON_VALUE)
+                .body(new ErrorMessageDTO(e.getMessage()));
+    }
 }

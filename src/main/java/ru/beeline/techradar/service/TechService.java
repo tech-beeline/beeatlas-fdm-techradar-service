@@ -172,46 +172,38 @@ public class TechService {
         log.info("start getProductTech");
         List<ProductDTO> result = productClient.getProduct();
         log.info("Product size is" + result.size());
-        if (result.size() < 50) {
-            result.forEach(productDTO -> {
-                Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
-                while (iterator.hasNext()) {
-                    ProductTechDTO techDTO = iterator.next();
-                    Optional<Tech> optionalTech = techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techDTO.getId());
-                    if (optionalTech.isPresent()) {
-                        techDTO.setLabel(optionalTech.get().getLabel());
-                    } else {
-                        iterator.remove();
-                    }
+
+        Set<Integer> ids = result.stream()
+                .flatMap(productDTO -> productDTO.getTech().stream())
+                .map(ProductTechDTO::getId)
+                .collect(Collectors.toSet());
+        log.info("get teches");
+        List<Tech> teches = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(ids);
+        log.info("teches received");
+        Map<Integer, String> techMap = teches.stream().collect(Collectors.toMap(Tech::getId, Tech::getLabel));
+
+        result.forEach(productDTO -> {
+            Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
+            while (iterator.hasNext()) {
+                ProductTechDTO techDTO = iterator.next();
+                String label = techMap.get(techDTO.getId());
+                if (label != null) {
+                    techDTO.setLabel(label);
+                } else {
+                    iterator.remove();
                 }
-            });
-        } else {
-            Set<Integer> ids = result.stream()
-                    .flatMap(productDTO -> productDTO.getTech().stream())
-                    .map(ProductTechDTO::getId)
-                    .collect(Collectors.toSet());
-            log.info("get teches");
-            List<Tech> teches = techRepository.findByIdInAndDeletedDateIsNullAndReviewIsTrue(ids);
-            log.info("teches received");
-            Map<Integer, String> techMap = teches.stream().collect(Collectors.toMap(Tech::getId, Tech::getLabel));
-            result.forEach(productDTO -> {
-                Iterator<ProductTechDTO> iterator = productDTO.getTech().iterator();
-                while (iterator.hasNext()) {
-                    ProductTechDTO techDTO = iterator.next();
-                    Optional<Tech> optionalTech = techRepository.findByIdAndDeletedDateIsNullAndReviewIsTrue(techDTO.getId());
-                    if (optionalTech.isPresent()) {
-                        techDTO.setLabel(techMap.get(techDTO.getId()));
-                    } else {
-                        iterator.remove();
-                    }
-                }
-            });
-        }
+            }
+        });
+
         return result.stream().distinct().collect(Collectors.toList());
     }
 
     public void createRelations(PostProductTechDTO tech) {
-        Tech techFromDb = techRepository.findByLabelIgnoreCase(tech.getProjLang());
+        List<Tech> matchingTechs = techRepository.findAllByLabelIgnoreCase(tech.getProjLang());
+        Tech techFromDb = matchingTechs.stream()
+                .filter(t -> t.getDeletedDate() == null)
+                .findFirst()
+                .orElse(matchingTechs.stream().findFirst().orElse(null));
         Integer id;
         if (techFromDb != null) {
             id = techFromDb.getId();

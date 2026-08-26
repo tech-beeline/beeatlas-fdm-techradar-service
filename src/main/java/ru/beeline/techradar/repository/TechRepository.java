@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Repository
 public interface TechRepository extends JpaRepository<Tech, Integer> {
-    Tech findByLabelIgnoreCase(String label);
+    List<Tech> findAllByLabelIgnoreCase(String label);
 
     List<Tech> findAllByLabelIn(List<String> labels);
 
